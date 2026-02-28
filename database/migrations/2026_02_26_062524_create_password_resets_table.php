@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // El role_id ahora está en la migración principal de users
-        // Esta migración se puede eliminar en versiones futuras
+        Schema::create('password_resets', function (Blueprint $table) {
+            $table->string('email')->index();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
+        });
     }
 
     /**
@@ -20,8 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            //
-        });
+        Schema::dropIfExists('password_resets');
     }
 };
