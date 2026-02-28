@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('alerts', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('ingredient_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('product_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->enum('type', ['low_stock', 'near_expiration', 'out_of_stock'])->default('low_stock');
+            $table->text('message');
+            $table->boolean('is_read')->default(false);
+            $table->timestamp('read_at')->nullable();
             $table->timestamps();
         });
     }
