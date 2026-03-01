@@ -316,10 +316,10 @@
         <nav class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 @if(request()->routeIs('login') || request()->routeIs('dashboard'))
-                    <img src="{{ asset('logo.png') }}" alt="brewstock" class="sidebar-logo">
+                    <img src="{{ asset('assets/logo.png') }}" alt="brewstock" class="sidebar-logo">
                 @else
                     <a href="{{ route('dashboard') }}" style="text-decoration: none; display: block;">
-                        <img src="{{ asset('logo.png') }}" alt="brewstock" class="sidebar-logo" style="cursor: pointer;">
+                        <img src="{{ asset('assets/logo.png') }}" alt="brewstock" class="sidebar-logo" style="cursor: pointer;">
                     </a>
                 @endif
             </div>

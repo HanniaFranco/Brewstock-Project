@@ -175,7 +175,7 @@
         <div class="forgot-content">
             <div class="forgot-form-section">
                 <div class="logo">
-                    <img src="{{ asset('logo.png') }}" alt="brewstock" class="logo-image">
+                    <img src="{{ asset('assets/logo.png') }}" alt="brewstock" class="logo-image">
                     <p style="color: #666; font-size: 16px; margin-top: -10px;">Admin Portal</p>
                 </div>
 
