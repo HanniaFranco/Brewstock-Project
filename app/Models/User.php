@@ -13,6 +13,10 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, CanResetPassword;
 
+    protected $table = 'User';
+
+    public $timestamps = false;
+
     /**
      * The attributes that are mass assignable.
      *

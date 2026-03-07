@@ -6,7 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class InventoryMovement extends Model
 {
-    //
+    protected $table = 'InventoryMovement';
+
+    public $timestamps = false;
+
     protected $fillable = [
         'ingredient_id',
         'type',

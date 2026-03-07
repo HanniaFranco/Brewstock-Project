@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,13 +14,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed roles first
-        $this->call(RoleSeeder::class);
-
-        // Seed admin user
-        $this->call(AdminUserSeeder::class);
-        
-        // Then seed users
-        $this->call(UserSeeder::class);
+        // No seeders: app uses existing MySQL data.
     }
 }

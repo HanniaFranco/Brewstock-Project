@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use App\Models\User;
 
 class AuthController extends Controller
@@ -32,7 +31,7 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (Auth::attempt($credentials, false)) {
             $request->session()->regenerate();
             return redirect()->route('dashboard')->with('success', 'Sesión iniciada correctamente');
         }
@@ -106,7 +105,7 @@ class AuthController extends Controller
             function (User $user, string $password) {
                 $user->forceFill([
                     'password' => Hash::make($password)
-                ])->setRememberToken(Str::random(60));
+                ]);
 
                 $user->save();
             }

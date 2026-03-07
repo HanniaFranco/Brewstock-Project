@@ -75,6 +75,12 @@ Route::middleware(['auth'])->group(function () {
     // Alerts routes
     Route::get('/alerts', [AlertsController::class, 'index'])->name('alerts.index');
     Route::get('/alerts/settings', [AlertsController::class, 'settings'])->name('alerts.settings');
+
+    // Admin users management routes
+    Route::middleware('admin')->group(function () {
+        Route::get('/users/create', [UsersController::class, 'create'])->name('users.create');
+        Route::post('/users', [UsersController::class, 'store'])->name('users.store');
+    });
 });
 
 // Redirect root to dashboard if authenticated, otherwise to login
