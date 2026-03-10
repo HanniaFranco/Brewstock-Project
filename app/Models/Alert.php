@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Alert extends Model
 {
+    protected $table = 'Alert';
+
+    public $timestamps = false;
+
     protected $fillable = [
         'ingredient_id',
         'product_id',

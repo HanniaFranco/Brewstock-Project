@@ -6,7 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class RecipeIngredient extends Model
 {
-    //
+    protected $table = 'RecipeIngredient';
+
+    public $timestamps = false;
+
     protected $fillable = [
         'recipe_id',
         'ingredient_id',

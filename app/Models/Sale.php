@@ -6,7 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Sale extends Model
 {
-    //
+    protected $table = 'Sale';
+
+    public $timestamps = false;
+
     protected $fillable = [
         'user_id',
         'total',

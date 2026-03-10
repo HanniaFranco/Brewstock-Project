@@ -34,6 +34,13 @@
             margin-top: 15px;
         }
 
+        .stat-card .value {
+            color: #4a5d3a;
+            font-size: 34px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
         .content-row {
             display: grid;
             grid-template-columns: 1fr;
@@ -67,6 +74,34 @@
             padding: 20px 25px;
         }
 
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e6ecdf;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .users-table th {
+            color: #5a7248;
+            font-weight: 600;
+        }
+
+        .users-table td {
+            color: #2f3a28;
+        }
+
+        .empty-users {
+            text-align: center;
+            color: #6c757d;
+            padding: 20px 0;
+        }
+
         .bottom-card {
             background: #f5f5f0;
             border-radius: 12px;
@@ -83,9 +118,11 @@
     <div class="dashboard-grid">
         <div class="stat-card">
             <h3>Total Usuarios</h3>
+            <div class="value">{{ $totalUsers }}</div>
         </div>
         <div class="stat-card">
-            <h3>Usuarios Activos</h3>
+            <h3>Usuarios con Rol</h3>
+            <div class="value">{{ $usersWithRole }}</div>
         </div>
     </div>
 
@@ -96,7 +133,36 @@
                 <h5>Lista de Usuarios</h5>
             </div>
             <div class="card-body">
-                <p>Contenido de usuarios aquí...</p>
+                @if((int) (auth()->user()->role_id ?? 0) === 1)
+                    <div class="mb-3 text-end">
+                        <a href="{{ route('users.create') }}" class="btn btn-success">Nuevo usuario</a>
+                    </div>
+                @endif
+
+                @if($users->isEmpty())
+                    <p class="empty-users">No hay usuarios registrados.</p>
+                @else
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Correo</th>
+                                <th>Rol</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($users as $user)
+                                <tr>
+                                    <td>{{ $user->id }}</td>
+                                    <td>{{ $user->name }}</td>
+                                    <td>{{ $user->email }}</td>
+                                    <td>{{ $user->role?->name ?? 'Sin rol' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
             </div>
         </div>
     </div>

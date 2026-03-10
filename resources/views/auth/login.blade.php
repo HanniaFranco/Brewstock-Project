@@ -345,11 +345,6 @@
                         @enderror
                     </div>
 
-                    <div class="remember-me">
-                        <input type="checkbox" id="remember" name="remember" value="1">
-                        <label for="remember">Recuérdame</label>
-                    </div>
-
                     <button type="submit" class="login-btn" id="submitBtn">Iniciar Sesión</button>
                     
                     @if(session('login_failed'))

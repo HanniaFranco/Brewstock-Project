@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Sale;
-use App\Models\SaleItem;
 use App\Models\Alert;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,15 +16,16 @@ class DashboardController extends Controller
     public function index()
     {
         // Obtener los productos más vendidos
-        $bestSellingProducts = SaleItem::select(
-            'products.id',
-            'products.name',
-            'products.price',
-            DB::raw('SUM(sale_items.quantity) as total_quantity'),
-            DB::raw('SUM(sale_items.quantity * sale_items.price) as total_sales')
-        )
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->groupBy('products.id', 'products.name', 'products.price')
+        $bestSellingProducts = DB::table('SaleItem as si')
+            ->select(
+                'p.id',
+                'p.name',
+                'p.price',
+                DB::raw('SUM(si.quantity) as total_quantity'),
+                DB::raw('SUM(si.quantity * si.price) as total_sales')
+            )
+            ->join('Products as p', 'si.product_id', '=', 'p.id')
+            ->groupBy('p.id', 'p.name', 'p.price')
             ->orderByDesc('total_quantity')
             ->limit(10)
             ->get();
@@ -35,7 +35,7 @@ class DashboardController extends Controller
             ->sum('total');
 
         // Obtener alertas no leídas
-        $unreadAlerts = Alert::where('is_read', false)
+        $unreadAlerts = Alert::whereIn(DB::raw('LOWER(COALESCE(status, ""))'), ['pendiente', 'pending', 'unread'])
             ->count();
 
         // Obtener últimas ventas
