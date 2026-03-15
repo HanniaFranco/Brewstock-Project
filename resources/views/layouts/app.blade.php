@@ -376,6 +376,15 @@
                         <li><a href="{{ route('alerts.settings') }}">Configuración</a></li>
                     </ul>
                 </li>
+
+                @if(Auth::check() && Auth::user()->role_id == 3)
+                <li>
+                    <a href="{{ route('logs.index') }}" class="{{ request()->routeIs('logs*') ? 'active' : '' }}">
+                        <i class="fas fa-history"></i>
+                        <span>Logs</span>
+                    </a>
+                </li>
+                @endif
             </ul>
 
             <div class="sidebar-footer">

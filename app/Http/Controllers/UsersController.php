@@ -7,24 +7,27 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Helpers\LogHelper;
 
 class UsersController extends Controller
 {
     public function index()
     {
         $users = User::with('role')
+            ->where('role_id','!=',3)
             ->orderBy('name')
             ->get();
 
         $totalUsers = $users->count();
         $usersWithRole = $users->whereNotNull('role_id')->count();
-
         return view('users.index', compact('users', 'totalUsers', 'usersWithRole'));
     }
 
     public function create()
     {
-        $roles = Role::orderBy('name')->get();
+        $roles = Role::where('id','!=',3)
+            ->orderBy('name')
+            ->get();
 
         return view('users.create', compact('roles'));
     }
@@ -44,12 +47,20 @@ class UsersController extends Controller
             'role_id' => ['required', 'integer', Rule::exists((new Role())->getTable(), 'id')],
         ]);
 
-        User::create([
-            'name' => $request->string('name')->toString(),
-            'email' => $request->string('email')->toString(),
-            'password' => Hash::make($request->string('password')->toString()),
-            'role_id' => (int) $request->input('role_id'),
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role_id' => $request->role_id
         ]);
+
+        LogHelper::log(
+            'CREATE',
+            'User',
+            'Nuevo usuario creado: '.$user->name,
+            $user->id
+        );
 
         return redirect()
             ->route('users.create')

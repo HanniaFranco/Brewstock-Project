@@ -8,6 +8,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\AlertsController;
+use App\Http\Controllers\LogsController;
 
 Route::get('/logo.png', function () {
     $candidates = [
@@ -57,6 +58,10 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
+
+    Route::get('/logs', [LogsController::class, 'index'])->name('logs.index');
+    Route::delete('/logs/clear', [LogsController::class, 'clear'])->name('logs.clear');
+
     // Products routes
     Route::get('/products', [ProductsController::class, 'index'])->name('products.index');
     Route::get('/products/categories', [ProductsController::class, 'categories'])->name('products.categories');
@@ -81,6 +86,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/users/create', [UsersController::class, 'create'])->name('users.create');
         Route::post('/users', [UsersController::class, 'store'])->name('users.store');
     });
+    
 });
 
 // Redirect root to dashboard if authenticated, otherwise to login

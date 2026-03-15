@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Middleware\SystemLogMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,7 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+
     ->withMiddleware(function (Middleware $middleware): void {
+
+        // Middleware global para logs
+        $middleware->append(SystemLogMiddleware::class);
+
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
         ]);
@@ -27,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 Request::HEADER_X_FORWARDED_AWS_ELB
         );
     })
+
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
