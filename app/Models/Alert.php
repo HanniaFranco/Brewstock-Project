@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Alert extends Model
 {
-    protected $table = 'Alert';
+    protected $table = 'alerts';
 
     public $timestamps = false;
 
