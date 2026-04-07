@@ -16,7 +16,7 @@ class DashboardController extends Controller
     public function index()
     {
         // Obtener los productos más vendidos
-        $bestSellingProducts = DB::table('SaleItem as si')
+        $bestSellingProducts = DB::table('sale_items as si')
             ->select(
                 'p.id',
                 'p.name',
@@ -24,7 +24,7 @@ class DashboardController extends Controller
                 DB::raw('SUM(si.quantity) as total_quantity'),
                 DB::raw('SUM(si.quantity * si.price) as total_sales')
             )
-            ->join('Products as p', 'si.product_id', '=', 'p.id')
+            ->join('products as p', 'si.product_id', '=', 'p.id')
             ->groupBy('p.id', 'p.name', 'p.price')
             ->orderByDesc('total_quantity')
             ->limit(10)
@@ -35,7 +35,7 @@ class DashboardController extends Controller
             ->sum('total');
 
         // Obtener alertas no leídas
-        $unreadAlerts = Alert::whereIn(DB::raw('LOWER(COALESCE(status, ""))'), ['pendiente', 'pending', 'unread'])
+        $unreadAlerts = Alert::where('is_read', false)
             ->count();
 
         // Obtener últimas ventas
