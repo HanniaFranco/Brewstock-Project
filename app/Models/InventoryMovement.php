@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class InventoryMovement extends Model
 {
-    protected $table = 'InventoryMovement';
+    protected $table = 'inventory_movements';
 
     public $timestamps = false;
 

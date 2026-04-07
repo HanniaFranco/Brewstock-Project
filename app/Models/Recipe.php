@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Recipe extends Model
 {
-    protected $table = 'Recipes';
+    protected $table = 'recipes';
 
     public $timestamps = false;
 

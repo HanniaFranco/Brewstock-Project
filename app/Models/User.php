@@ -13,7 +13,7 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, CanResetPassword;
 
-    protected $table = 'User';
+    protected $table = 'users';
 
     public $timestamps = false;
 

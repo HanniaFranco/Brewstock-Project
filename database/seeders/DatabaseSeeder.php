@@ -14,6 +14,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // No seeders: app uses existing MySQL data.
+        $this->call(UserSeeder::class);
     }
 }
