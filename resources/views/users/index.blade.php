@@ -96,6 +96,27 @@
             color: #2f3a28;
         }
 
+        .user-row {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .user-row:hover {
+            background-color: #e8f5e8;
+        }
+
+        .user-row td {
+            position: relative;
+        }
+
+        .user-row:hover td::after {
+            content: '→';
+            position: absolute;
+            right: 10px;
+            color: #5a7248;
+            font-weight: bold;
+        }
+
         .empty-users {
             text-align: center;
             color: #6c757d;
@@ -153,7 +174,7 @@
                         </thead>
                         <tbody>
                             @foreach($users as $user)
-                                <tr>
+                                <tr class="user-row" onclick="window.location.href='/users/{{ $user->id }}'">
                                     <td>{{ $user->id }}</td>
                                     <td>{{ $user->name }}</td>
                                     <td>{{ $user->email }}</td>

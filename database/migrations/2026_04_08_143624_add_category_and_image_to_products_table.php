@@ -11,11 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('password_resets', function (Blueprint $table) {
-            $table->id();
-            $table->string('email')->index();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
+        Schema::table('products', function (Blueprint $table) {
+            $table->string('category')->after('price');
+            $table->string('image')->nullable()->after('category');
         });
     }
 
@@ -24,6 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('password_resets');
+        Schema::table('products', function (Blueprint $table) {
+            $table->dropColumn(['category', 'image']);
+        });
     }
 };

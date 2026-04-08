@@ -66,4 +66,52 @@ class UsersController extends Controller
             ->route('users.create')
             ->with('success', 'Cliente registrado correctamente.');
     }
+
+    public function show($id)
+    {
+        $user = User::with('role')->findOrFail($id);
+        $roles = Role::where('id','!=',3)
+            ->orderBy('name')
+            ->get();
+
+        return view('users.show', compact('user', 'roles'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        
+        $request->validate([
+            'name' => ['required', 'string', 'max:150'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:150',
+                Rule::unique((new User())->getTable(), 'email')->ignore($user->id),
+            ],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'role_id' => ['nullable', 'integer', Rule::exists((new Role())->getTable(), 'id')],
+        ]);
+
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'role_id' => $request->role_id,
+        ]);
+
+        LogHelper::log(
+            'UPDATE',
+            'User',
+            'Usuario actualizado: '.$user->name,
+            $user->id
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuario actualizado correctamente',
+            'user' => $user
+        ]);
+    }
 }

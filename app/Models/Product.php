@@ -8,11 +8,11 @@ class Product extends Model
 {
     protected $table = 'products';
 
-    public $timestamps = false;
-
     protected $fillable = [
         'name',
         'price',
+        'category',
+        'image',
         'active',
     ];
 
@@ -26,5 +26,14 @@ class Product extends Model
         return $this->hasMany(SaleItem::class);
     }
 
+    public function getStatusAttribute()
+    {
+        return $this->active ? 'Activo' : 'Inactivo';
+    }
+
+    public function setStatusAttribute($value)
+    {
+        $this->active = $value === 'Activo';
+    }
 
 }
