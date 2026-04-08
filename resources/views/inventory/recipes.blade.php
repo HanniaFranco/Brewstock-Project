@@ -5,103 +5,477 @@
 
 @section('styles')
     <style>
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin-bottom: 20px;
+        .recipes-container {
+            padding: 20px;
         }
 
-        .stat-card {
-            background: #f5f5f0;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            border: 2px solid #8fbc8f;
-            text-align: center;
-            min-height: 180px;
+        .recipes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 80px;
+        }
+
+        .recipe-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .recipe-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .recipe-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #8fbc8f 0%, #5a7248 100%);
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
+            color: white;
+            font-size: 48px;
+            position: relative;
         }
 
-        .stat-card h3 {
+        .recipe-category {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(255, 255, 255, 0.9);
             color: #5a7248;
-            font-size: 16px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
             font-weight: 600;
-            margin-bottom: 20px;
-            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .content-row {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+        .recipe-content {
+            padding: 20px;
         }
 
-        .card {
-            background: #f5f5f0;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            padding: 0;
-            border: 2px solid #8fbc8f;
+        .recipe-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+            margin: 0 0 8px 0;
+            line-height: 1.3;
         }
 
-        .card-header {
-            padding: 20px 25px;
-            border-bottom: none;
-            background-color: transparent;
-            text-align: center;
+        .recipe-description {
+            font-size: 14px;
+            color: #666;
+            margin: 0 0 16px 0;
+            line-height: 1.4;
         }
 
-        .card-header h5 {
-            margin: 0;
+        .recipe-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .recipe-time {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .recipe-time i {
             color: #5a7248;
+        }
+
+        .recipe-difficulty {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
             font-weight: 600;
-            font-size: 16px;
         }
 
-        .card-body {
-            padding: 20px 25px;
+        .difficulty-easy {
+            color: #28a745;
         }
 
-        .bottom-card {
-            background: #f5f5f0;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            padding: 30px;
-            min-height: 150px;
-            border: 2px solid #8fbc8f;
+        .difficulty-medium {
+            color: #ffc107;
+        }
+
+        .difficulty-hard {
+            color: #dc3545;
+        }
+
+        .fab-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #5a7248 0%, #8fbc8f 100%);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(90, 114, 72, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .fab-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(90, 114, 72, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .recipes-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .recipe-card {
+                margin: 0 10px;
+            }
+
+            .fab-button {
+                bottom: 20px;
+                right: 20px;
+                width: 56px;
+                height: 56px;
+                font-size: 20px;
+            }
         }
     </style>
 @endsection
 
 @section('content')
-    <!-- Stats Cards -->
-    <div class="dashboard-grid">
-        <div class="stat-card">
-            <h3>Total Recetas</h3>
+    <div class="recipes-container">
+        <!-- Recipes Grid -->
+        <div class="recipes-grid" id="recipesGrid">
+            <!-- Iced Americano Recipe -->
+            <div class="recipe-card">
+                <div class="recipe-image">
+                    <i class="fas fa-coffee"></i>
+                    <span class="recipe-category">Cafe Frio</span>
+                </div>
+                <div class="recipe-content">
+                    <h3 class="recipe-name">Iced Americano</h3>
+                    <p class="recipe-description">Refrescante café helado con agua y espresso, perfecto para los días calurosos.</p>
+                    <div class="recipe-meta">
+                        <div class="recipe-time">
+                            <i class="fas fa-clock"></i>
+                            <span>5 min</span>
+                        </div>
+                        <div class="recipe-difficulty difficulty-easy">
+                            <i class="fas fa-star"></i>
+                            <span>Fácil</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cappuccino Recipe -->
+            <div class="recipe-card">
+                <div class="recipe-image">
+                    <i class="fas fa-mug-hot"></i>
+                    <span class="recipe-category">Cafe Caliente</span>
+                </div>
+                <div class="recipe-content">
+                    <h3 class="recipe-name">Cappuccino</h3>
+                    <p class="recipe-description">Clásico italiano con espresso, leche vaporizada y espuma cremosa.</p>
+                    <div class="recipe-meta">
+                        <div class="recipe-time">
+                            <i class="fas fa-clock"></i>
+                            <span>8 min</span>
+                        </div>
+                        <div class="recipe-difficulty difficulty-medium">
+                            <i class="fas fa-star"></i>
+                            <span>Medio</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Latte Recipe -->
+            <div class="recipe-card">
+                <div class="recipe-image">
+                    <i class="fas fa-coffee"></i>
+                    <span class="recipe-category">Cafe Caliente</span>
+                </div>
+                <div class="recipe-content">
+                    <h3 class="recipe-name">Café Latte</h3>
+                    <p class="recipe-description">Suave combinación de espresso con leche vaporizada y un toque de espuma.</p>
+                    <div class="recipe-meta">
+                        <div class="recipe-time">
+                            <i class="fas fa-clock"></i>
+                            <span>7 min</span>
+                        </div>
+                        <div class="recipe-difficulty difficulty-easy">
+                            <i class="fas fa-star"></i>
+                            <span>Fácil</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mocha Recipe -->
+            <div class="recipe-card">
+                <div class="recipe-image">
+                    <i class="fas fa-mug-hot"></i>
+                    <span class="recipe-category">Cafe Caliente</span>
+                </div>
+                <div class="recipe-content">
+                    <h3 class="recipe-name">Mocha</h3>
+                    <p class="recipe-description">Delicioso café con chocolate, leche vaporizada y crema batida.</p>
+                    <div class="recipe-meta">
+                        <div class="recipe-time">
+                            <i class="fas fa-clock"></i>
+                            <span>10 min</span>
+                        </div>
+                        <div class="recipe-difficulty difficulty-medium">
+                            <i class="fas fa-star"></i>
+                            <span>Medio</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cold Brew Recipe -->
+            <div class="recipe-card">
+                <div class="recipe-image">
+                    <i class="fas fa-glass-whiskey"></i>
+                    <span class="recipe-category">Cafe Frio</span>
+                </div>
+                <div class="recipe-content">
+                    <h3 class="recipe-name">Cold Brew</h3>
+                    <p class="recipe-description">Café extraído en frío por 12 horas, suave y con bajo acidez.</p>
+                    <div class="recipe-meta">
+                        <div class="recipe-time">
+                            <i class="fas fa-clock"></i>
+                            <span>12 hr</span>
+                        </div>
+                        <div class="recipe-difficulty difficulty-hard">
+                            <i class="fas fa-star"></i>
+                            <span>Difícil</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Macchiato Recipe -->
+            <div class="recipe-card">
+                <div class="recipe-image">
+                    <i class="fas fa-coffee"></i>
+                    <span class="recipe-category">Cafe Caliente</span>
+                </div>
+                <div class="recipe-content">
+                    <h3 class="recipe-name">Caramel Macchiato</h3>
+                    <p class="recipe-description">Espresso con leche vaporizada, caramelo y vainilla.</p>
+                    <div class="recipe-meta">
+                        <div class="recipe-time">
+                            <i class="fas fa-clock"></i>
+                            <span>8 min</span>
+                        </div>
+                        <div class="recipe-difficulty difficulty-medium">
+                            <i class="fas fa-star"></i>
+                            <span>Medio</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="stat-card">
-            <h3>Recetas Activas</h3>
-        </div>
+
+        <!-- Floating Action Button -->
+        <button class="fab-button" onclick="openAddRecipeModal()">
+            <i class="fas fa-plus"></i>
+        </button>
     </div>
 
-    <!-- Main Content Row -->
-    <div class="content-row">
-        <div class="card">
-            <div class="card-header">
-                <h5>Lista de Recetas</h5>
-            </div>
-            <div class="card-body">
-                <p>Contenido de recetas aquí...</p>
-            </div>
-        </div>
-    </div>
+    <script>
+        function openAddRecipeModal() {
+            // Redirigir a página de receta individual vacía
+            window.location.href = '/inventory/recipes/create';
+        }
 
-    <!-- Bottom Card -->
-    <div class="bottom-card">
-    </div>
+        // Función para ver detalles de receta
+        document.querySelectorAll('.recipe-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                if (!e.target.closest('.fab-button')) {
+                    const recipeName = this.querySelector('.recipe-name').textContent;
+                    const recipeSlug = recipeName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                    console.log('Ver receta:', recipeName, 'Slug:', recipeSlug);
+                    
+                    // Redirigir a página individual de la receta
+                    window.location.href = `/inventory/recipes/${recipeSlug}`;
+                }
+            });
+        });
+
+        // Funciones de cache para recetas
+        function loadRecipesFromCache() {
+            try {
+                return JSON.parse(localStorage.getItem('recipes_cache') || '[]');
+            } catch (e) {
+                console.error('Error cargando recetas desde cache:', e);
+                return [];
+            }
+        }
+
+        function saveRecipesToCache(recipes) {
+            try {
+                localStorage.setItem('recipes_cache', JSON.stringify(recipes));
+                console.log('Recetas guardadas en cache:', recipes);
+            } catch (e) {
+                console.error('Error guardando recetas en cache:', e);
+            }
+        }
+
+        function addRecipeToGrid(recipe) {
+            const grid = document.getElementById('recipesGrid');
+            const categoryLabels = {
+                'bebida-fria': 'Bebida Fría',
+                'bebida-caliente': 'Bebida Caliente',
+                'postre': 'Postre',
+                'snack': 'Snack',
+                'desayuno': 'Desayuno'
+            };
+
+            const categoryIcons = {
+                'bebida-fria': 'fa-glass-whiskey',
+                'bebida-caliente': 'fa-mug-hot',
+                'postre': 'fa-cookie',
+                'snack': 'fa-cookie-bite',
+                'desayuno': 'fa-bread-slice'
+            };
+
+            const difficultyColors = {
+                'facil': 'difficulty-easy',
+                'medio': 'difficulty-medium',
+                'dificil': 'difficulty-hard'
+            };
+
+            const newCard = document.createElement('div');
+            newCard.className = 'recipe-card';
+            newCard.innerHTML = `
+                <div class='recipe-image'>
+                    <i class='fas ${categoryIcons[recipe.category] || 'fa-coffee'}'></i>
+                    <span class='recipe-category'>${categoryLabels[recipe.category] || recipe.category}</span>
+                </div>
+                <div class='recipe-content'>
+                    <h3 class='recipe-name'>${recipe.name}</h3>
+                    <p class='recipe-description'>Receta personalizada creada por ti.</p>
+                    <div class='recipe-meta'>
+                        <div class='recipe-time'>
+                            <i class='fas fa-clock'></i>
+                            <span>Personalizado</span>
+                        </div>
+                        <div class='recipe-difficulty difficulty-easy'>
+                            <i class='fas fa-star'></i>
+                            <span>Personal</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Agregar evento de click
+            newCard.addEventListener('click', function(e) {
+                if (!e.target.closest('.fab-button')) {
+                    window.location.href = `/inventory/recipes/${recipe.slug}`;
+                }
+            });
+
+            // Insertar al principio del grid
+            if (grid.firstChild) {
+                grid.insertBefore(newCard, grid.firstChild);
+            } else {
+                grid.appendChild(newCard);
+            }
+
+            // Animación de entrada
+            newCard.style.backgroundColor = '#d4edda';
+            setTimeout(() => {
+                newCard.style.backgroundColor = '';
+            }, 3000);
+        }
+
+        function updateRecipeInGrid(updatedRecipe) {
+            const cards = document.querySelectorAll('.recipe-card');
+            cards.forEach(card => {
+                const nameElement = card.querySelector('.recipe-name');
+                if (nameElement && nameElement.textContent.toLowerCase().includes(updatedRecipe.name.toLowerCase())) {
+                    // Actualizar nombre
+                    nameElement.textContent = updatedRecipe.name;
+                    
+                    // Actualizar categoría si es necesario
+                    const categoryElement = card.querySelector('.recipe-category');
+                    const categoryLabels = {
+                        'bebida-fria': 'Bebida Fría',
+                        'bebida-caliente': 'Bebida Caliente',
+                        'postre': 'Postre',
+                        'snack': 'Snack',
+                        'desayuno': 'Desayuno'
+                    };
+                    if (categoryElement) {
+                        categoryElement.textContent = categoryLabels[updatedRecipe.category] || updatedRecipe.category;
+                    }
+
+                    // Animación de actualización
+                    card.style.backgroundColor = '#fff3cd';
+                    setTimeout(() => {
+                        card.style.backgroundColor = '';
+                    }, 2000);
+
+                    // Actualizar evento de click con nuevo slug
+                    const newCard = card.cloneNode(true);
+                    newCard.addEventListener('click', function(e) {
+                        if (!e.target.closest('.fab-button')) {
+                            window.location.href = `/inventory/recipes/${updatedRecipe.slug}`;
+                        }
+                    });
+                    card.replaceWith(newCard);
+                }
+            });
+        }
+
+        // Función para cargar recetas desde cache
+        function loadCachedRecipes() {
+            const cachedRecipes = loadRecipesFromCache();
+            
+            cachedRecipes.forEach(recipe => {
+                // Buscar si ya existe un card con el mismo nombre
+                const existingCard = Array.from(document.querySelectorAll('.recipe-card')).find(card => {
+                    const nameElement = card.querySelector('.recipe-name');
+                    return nameElement && nameElement.textContent.toLowerCase() === recipe.name.toLowerCase();
+                });
+                
+                if (existingCard) {
+                    // Si existe, actualizarlo
+                    updateRecipeInGrid(recipe);
+                } else {
+                    // Si no existe, agregarlo
+                    addRecipeToGrid(recipe);
+                }
+            });
+        }
+
+        // Cargar recetas desde cache al iniciar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCachedRecipes();
+        });
+
+        // También cargar cuando la página gana foco (al regresar de otra pestaña)
+        window.addEventListener('focus', function() {
+            setTimeout(loadCachedRecipes, 100);
+        });
+    </script>
 @endsection

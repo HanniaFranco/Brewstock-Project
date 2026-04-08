@@ -309,6 +309,7 @@
         }
     </style>
     @yield('styles')
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body>
     <div class="container-fluid">
@@ -358,13 +359,16 @@
                     </a>
                 </li>
 
+                @if(Auth::check() && Auth::user()->role_id != 2)
                 <li>
                     <a href="{{ route('sales.index') }}" class="{{ request()->routeIs('sales*') ? 'active' : '' }}">
                         <i class="fas fa-chart-bar"></i>
                         <span>Ventas</span>
                     </a>
                 </li>
+                @endif
 
+                @if(Auth::check() && Auth::user()->role_id != 2)
                 <li>
                     <a href="javascript:void(0)" data-toggle="submenu" class="{{ request()->routeIs('alerts*') ? 'active' : '' }}">
                         <i class="fas fa-bell"></i>
@@ -376,6 +380,7 @@
                         <li><a href="{{ route('alerts.settings') }}">Configuración</a></li>
                     </ul>
                 </li>
+                @endif
 
                 @if(Auth::check() && Auth::user()->role_id == 3)
                 <li>

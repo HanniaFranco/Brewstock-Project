@@ -64,22 +64,36 @@ Route::middleware(['auth'])->group(function () {
 
     // Products routes
     Route::get('/products', [ProductsController::class, 'index'])->name('products.index');
+    Route::post('/products', [ProductsController::class, 'store'])->name('products.store');
     Route::get('/products/categories', [ProductsController::class, 'categories'])->name('products.categories');
+    Route::get('/products/{category}', [ProductsController::class, 'showCategoryProducts'])->name('products.category');
+    Route::get('/products/{category}/{product}', [ProductsController::class, 'show'])->name('products.show');
     
     // Inventory routes
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::get('/inventory/ingredients', [InventoryController::class, 'ingredients'])->name('inventory.ingredients');
+    Route::post('/inventory/ingredients', [InventoryController::class, 'storeIngredient'])->name('inventory.ingredients.store');
     Route::get('/inventory/recipes', [InventoryController::class, 'recipes'])->name('inventory.recipes');
+    Route::get('/inventory/recipes/create', [InventoryController::class, 'createRecipe'])->name('inventory.recipes.create');
+    Route::get('/inventory/recipes/{slug}', [InventoryController::class, 'showRecipe'])->name('inventory.recipes.show');
+    Route::post('/inventory/recipes', [InventoryController::class, 'storeRecipe'])->name('inventory.recipes.store');
+    Route::put('/inventory/recipes/{slug}', [InventoryController::class, 'updateRecipe'])->name('inventory.recipes.update');
     
     // Users routes
     Route::get('/users', [UsersController::class, 'index'])->name('users.index');
+    Route::get('/users/{id}', [UsersController::class, 'show'])->name('users.show');
+    Route::put('/users/{id}', [UsersController::class, 'update'])->name('users.update');
     
     // Sales routes
-    Route::get('/sales', [SalesController::class, 'index'])->name('sales.index');
+    Route::middleware('restrict.sales')->group(function () {
+        Route::get('/sales', [SalesController::class, 'index'])->name('sales.index');
+    });
     
     // Alerts routes
-    Route::get('/alerts', [AlertsController::class, 'index'])->name('alerts.index');
-    Route::get('/alerts/settings', [AlertsController::class, 'settings'])->name('alerts.settings');
+    Route::middleware('restrict.alerts')->group(function () {
+        Route::get('/alerts', [AlertsController::class, 'index'])->name('alerts.index');
+        Route::get('/alerts/settings', [AlertsController::class, 'settings'])->name('alerts.settings');
+    });
 
     // Admin users management routes
     Route::middleware('admin')->group(function () {

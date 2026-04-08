@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Productos')
-@section('page_title', 'Todos los Productos')
+@section('title', $categoryName)
+@section('page_title', $categoryName)
 
 @section('styles')
     <style>
@@ -12,9 +12,6 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             margin-bottom: 25px;
             border: 2px solid #8fbc8f;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
         .page-title {
@@ -24,24 +21,29 @@
             margin: 0;
         }
 
-        .add-product-btn {
-            background: #5a7248;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin: 10px 0 0 0;
+            font-size: 14px;
         }
 
-        .add-product-btn:hover {
-            background: #4a5d3a;
-            transform: translateY(-1px);
+        .breadcrumb-item {
+            color: #666;
+        }
+
+        .breadcrumb-item.active {
+            color: #5a7248;
+            font-weight: 500;
+        }
+
+        .breadcrumb-item a {
+            color: #5a7248;
+            text-decoration: none;
+        }
+
+        .breadcrumb-item a:hover {
+            text-decoration: underline;
         }
 
         .products-table {
@@ -75,6 +77,14 @@
 
         .table tbody tr:hover {
             background: #f8f9fa;
+        }
+
+        .product-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
         }
 
         .product-image-placeholder {
@@ -178,9 +188,7 @@
 
         @media (max-width: 768px) {
             .page-header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
+                padding: 15px 20px;
             }
 
             .page-title {
@@ -191,6 +199,11 @@
             .table tbody td {
                 padding: 10px;
                 font-size: 13px;
+            }
+
+            .product-image {
+                width: 40px;
+                height: 40px;
             }
 
             .product-image-placeholder {
@@ -210,12 +223,23 @@
 @section('content')
     <!-- Page Header -->
     <div class="page-header">
-        <h1 class="page-title">Todos los Productos</h1>
-        <button class="add-product-btn" onclick="openAddProductModal()">
-            <i class="fas fa-plus"></i>
-            Agregar Producto
-        </button>
+        <div>
+            <h1 class="page-title" style="margin: 0 0 15px 0;">{{ $categoryName }}</h1>
+            <a href="{{ route('products.categories') }}" class="btn d-inline-flex align-items-center gap-2" style="background-color: #4a5d3a; border-color: #4a5d3a; color: white;">
+                <i class="fas fa-arrow-left"></i>
+                Volver a Categorías
+            </a>
+        </div>
     </div>
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ route('products.index') }}">Productos</a>
+            </li>
+            <li class="breadcrumb-item active">{{ $categoryName }}</li>
+        </ol>
+    </nav>
 
     <!-- Products Table -->
     <div class="products-table">
@@ -231,7 +255,7 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($allProducts ?? $products as $product)
+                @forelse($products as $product)
                     <tr>
                         <td class="product-name">{{ $product['name'] }}</td>
                         <td>
@@ -246,14 +270,11 @@
                         </td>
                         <td>
                             <div class="action-buttons">
-                               @php
-                                    $categorySlug = match($product['category']) {
-                                        'Bebidas Frías' => 'cold',
-                                        'Bebidas calientes' => 'hot',
-                                        'Tés e Infusiones' => 'tea',
-                                        'Repostería' => 'bakery',
-                                        default => 'snacks',
-                                    };
+                                @php
+                                    $categorySlug = $product['category'] === 'Bebidas Frías' ? 'cold' : 
+                                                   ($product['category'] === 'Bebidas calientes' ? 'hot' : 
+                                                   ($product['category'] === 'Tés e Infusiones' ? 'tea' : 
+                                                   ($product['category'] === 'Repostería' ? 'bakery' : 'snacks')));
                                 @endphp
                                 <a href="{{ route('products.show', ['category' => $categorySlug, 'product' => $product['id']]) }}" class="btn-action view" title="Ver">
                                     <i class="fas fa-eye"></i>
@@ -275,7 +296,7 @@
                         <td colspan="6" class="text-center py-5">
                             <div class="no-products">
                                 <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                                <p class="text-muted">No hay productos registrados</p>
+                                <p class="text-muted">No hay productos en esta categoría</p>
                             </div>
                         </td>
                     </tr>
@@ -285,12 +306,12 @@
     </div>
 
     <!-- Edit Product Modal -->
-    <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <div class="modal" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editProductModalLabel">Editar Producto</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <button type="button" class="btn-close" onclick="closeModal()" aria-label="Close">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -330,64 +351,8 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
                     <button type="button" class="btn btn-primary" onclick="saveProduct()">Guardar Cambios</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Product Modal -->
-    <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addProductModalLabel">Agregar Nuevo Producto</h5>
-                    <button type="button" class="btn-close" onclick="closeAddProductModal()" aria-label="Close">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="addProductForm">
-                        <div class="form-group">
-                            <label for="addProductName" class="form-label">Nombre del producto</label>
-                            <input type="text" class="form-control" id="addProductName" name="name" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="addProductCategory" class="form-label">Categoría</label>
-                            <select class="form-control" id="addProductCategory" name="category" required>
-                                <option value="">Seleccionar categoría</option>
-                                <option value="Bebidas Frías">Bebidas Frías</option>
-                                <option value="Bebidas calientes">Bebidas calientes</option>
-                                <option value="Tés e Infusiones">Tés e Infusiones</option>
-                                <option value="Repostería">Repostería</option>
-                                <option value="Snacks">Snacks</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="addProductPrice" class="form-label">Precio</label>
-                            <input type="number" class="form-control" id="addProductPrice" name="price" step="0.01" min="0" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="addProductStatus" class="form-label">Estatus</label>
-                            <select class="form-control" id="addProductStatus" name="status" required>
-                                <option value="Activo">Activo</option>
-                                <option value="Inactivo">Inactivo</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="addProductImage" class="form-label">Imagen (opcional)</label>
-                            <input type="text" class="form-control" id="addProductImage" name="image" placeholder="nombre_de_imagen.jpg">
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeAddProductModal()">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="addProduct()">Agregar Producto</button>
                 </div>
             </div>
         </div>
@@ -529,20 +494,21 @@
     </style>
 
     <script>
-        // Cargar productos desde localStorage SOLO si existe cache válido para esta página específica
+        // Cargar productos desde localStorage SOLO si existe cache válido para esta categoría específica
         let hasCache = false;
-        let cacheKey = 'products_index_cache'; // Cache específico para esta página
+        let categorySlug = '{{ request()->segment(2) }}'; // Obtener el slug de la categoría desde la URL
+        let cacheKey = 'products_category_' + categorySlug + '_cache'; // Cache específico para esta categoría
         let cachedProducts = loadProductsFromCache();
         let currentProducts;
         
         if (cachedProducts && cachedProducts.length > 0) {
             currentProducts = cachedProducts;
             hasCache = true;
-            console.log('Using cached products for index page:', currentProducts);
+            console.log('Using cached products for category', categorySlug + ':', currentProducts);
         } else {
-            currentProducts = @json($allProducts ?? $products);
-            console.log('Using original products for index page:', currentProducts);
-            // Limpiar cualquier cache residual de esta página
+            currentProducts = @json(array_values($products));
+            console.log('Using original products for category', categorySlug + ':', currentProducts);
+            // Limpiar cualquier cache residual de esta categoría
             clearProductsCache();
         }
         
@@ -559,7 +525,7 @@
         function saveProductsToCache() {
             try {
                 localStorage.setItem(cacheKey, JSON.stringify(currentProducts));
-                console.log('Products saved to cache for index page');
+                console.log('Products saved to cache for category', categorySlug);
             } catch (e) {
                 console.error('Error saving products to cache:', e);
             }
@@ -568,15 +534,42 @@
         function clearProductsCache() {
             try {
                 localStorage.removeItem(cacheKey);
-                console.log('Products cache cleared for index page');
+                console.log('Products cache cleared for category', categorySlug);
             } catch (e) {
                 console.error('Error clearing products cache:', e);
             }
         }
 
         function openEditModal(productId) {
-            const product = currentProducts.find(p => p.id == productId);
-            if (!product) return;
+            console.log('openEditModal called with productId:', productId);
+            console.log('currentProducts available:', currentProducts);
+            
+            let product = currentProducts.find(p => p.id == productId);
+            console.log('found product in currentProducts:', product);
+            
+            // Si no se encuentra el producto en currentProducts, recargar desde los datos originales
+            if (!product) {
+                console.log('Product not found in currentProducts, reloading from original data...');
+                const originalProducts = @json(array_values($products));
+                product = originalProducts.find(p => p.id == productId);
+                
+                if (product) {
+                    console.log('Product found in original data:', product);
+                    // Agregar el producto de vuelta a currentProducts y actualizar el cache
+                    currentProducts.push(product);
+                    saveProductsToCache();
+                    console.log('Product restored to currentProducts and cache updated');
+                    
+                    // Actualizar la tabla para mostrar el producto restaurado
+                    restoreTableRow(product);
+                }
+            }
+            
+            if (!product) {
+                console.error('Product not found with ID:', productId);
+                alert('No se encontró el producto con ID: ' + productId);
+                return;
+            }
 
             document.getElementById('editProductId').value = product.id;
             document.getElementById('editProductName').value = product.name;
@@ -585,12 +578,30 @@
             document.getElementById('editProductStatus').value = product.status;
 
             const modal = document.getElementById('editProductModal');
-            modal.classList.add('show');
+            if (modal) {
+                modal.classList.add('show');
+                console.log('Modal opened successfully');
+            } else {
+                console.error('Modal not found!');
+                alert('Error: No se encontró el modal del producto');
+            }
         }
 
         function closeModal() {
+            console.log('closeModal called');
             const modal = document.getElementById('editProductModal');
+            console.log('modal element:', modal);
             modal.classList.remove('show');
+        }
+
+        function testModal() {
+            console.log('testModal called');
+            const modal = document.getElementById('editProductModal');
+            console.log('modal element:', modal);
+            if (modal) {
+                modal.classList.add('show');
+                console.log('modal show class added');
+            }
         }
 
         function saveProduct() {
@@ -620,9 +631,7 @@
                 updateProductInTable(productId, productData);
                 
                 // Actualizar el botón de toggle si el estatus cambió
-                if (productData.status !== currentProducts[productIndex].status) {
-                    updateToggleButton(productId, productData.status);
-                }
+                updateToggleButton(productId, productData.status);
                 
                 // Mostrar mensaje de éxito
                 showSuccessMessage('Producto actualizado: ' + productData.name);
@@ -638,31 +647,37 @@
             // Encontrar la fila del producto en la tabla
             const tableRows = document.querySelectorAll('table tbody tr');
             tableRows.forEach(row => {
-                const editButton = row.querySelector('button[onclick*="' + productId + '"]');
+                const editButton = row.querySelector('button[onclick*="openEditModal"]');
                 if (editButton) {
-                    // Actualizar las celdas de la fila
-                    const cells = row.querySelectorAll('td');
-                    if (cells.length >= 6) {
-                        cells[0].textContent = productData.name; // Nombre (columna 0)
-                        // cells[1] es la imagen (no se actualiza)
-                        cells[2].textContent = productData.category; // Categoría (columna 2)
-                        cells[3].textContent = '$' + productData.price.toFixed(2); // Precio (columna 3)
-                        
-                        // Actualizar el badge de estatus (columna 4)
-                        const statusBadge = cells[4].querySelector('.badge');
-                        if (statusBadge) {
-                            statusBadge.textContent = productData.status;
-                            statusBadge.className = 'badge ' + (productData.status === 'Activo' ? 'badge-success' : 'badge-danger');
+                    const onclickAttr = editButton.getAttribute('onclick');
+                    const productIdMatch = onclickAttr.match(/openEditModal\((\d+)\)/);
+                    
+                    if (productIdMatch && parseInt(productIdMatch[1]) === productId) {
+                        // Actualizar las celdas de la fila
+                        const cells = row.querySelectorAll('td');
+                        if (cells.length >= 6) {
+                            cells[0].textContent = productData.name; // Nombre (columna 0)
+                            // cells[1] es la imagen (no se actualiza)
+                            cells[2].textContent = productData.category; // Categoría (columna 2)
+                            cells[3].textContent = '$' + productData.price.toFixed(2); // Precio (columna 3)
+                            
+                            // Actualizar el badge de estatus (columna 4)
+                            const statusBadge = cells[4].querySelector('.badge');
+                            if (statusBadge) {
+                                statusBadge.textContent = productData.status;
+                                statusBadge.className = 'badge ' + (productData.status === 'Activo' ? 'badge-success' : 'badge-danger');
+                            }
+                            
+                            // Actualizar el botón de editar con el nuevo onclick (columna 5)
+                            editButton.setAttribute('onclick', 'openEditModal(' + productId + ')');
+                            
+                            // Resaltar la fila para mostrar que se actualizó
+                            row.style.backgroundColor = '#d4edda';
+                            setTimeout(() => {
+                                row.style.backgroundColor = '';
+                            }, 2000);
                         }
-                        
-                        // Actualizar el botón de editar con el nuevo onclick (columna 5)
-                        editButton.setAttribute('onclick', 'openEditModal(' + productId + ')');
-                        
-                        // Resaltar la fila para mostrar que se actualizó
-                        row.style.backgroundColor = '#d4edda';
-                        setTimeout(() => {
-                            row.style.backgroundColor = '';
-                        }, 2000);
+                        return; // Stop searching after finding the row
                     }
                 }
             });
@@ -703,11 +718,28 @@
         }
 
         function deleteProduct(productId, productName) {
+            console.log('=== DELETE FUNCTION CALLED ===');
             console.log('Attempting to delete product:', productId, productName);
+            console.log('currentProducts:', currentProducts);
+            
             if (confirm('¿Estás seguro de que quieres eliminar el producto "' + productName + '"?')) {
                 // Eliminar el producto del array
-                const productIndex = currentProducts.findIndex(p => p.id == productId);
+                let productIndex = currentProducts.findIndex(p => p.id == productId);
                 console.log('Product index found:', productIndex);
+                
+                if (productIndex === -1) {
+                    // Si no está en currentProducts, agregarlo primero desde los datos originales
+                    console.log('Product not found in currentProducts, loading from original data...');
+                    const originalProducts = @json(array_values($products));
+                    const originalProduct = originalProducts.find(p => p.id == productId);
+                    
+                    if (originalProduct) {
+                        currentProducts.push(originalProduct);
+                        productIndex = currentProducts.findIndex(p => p.id == productId);
+                        console.log('Product restored from original data, new index:', productIndex);
+                    }
+                }
+                
                 console.log('Current products before delete:', currentProducts);
                 
                 if (productIndex !== -1) {
@@ -728,19 +760,42 @@
                     console.error('Product not found in array for deletion. Available IDs:', currentProducts.map(p => p.id));
                     showErrorMessage('No se encontró el producto para eliminar');
                 }
+            } else {
+                console.log('Delete cancelled by user');
             }
         }
 
         function toggleProductStatus(productId, currentStatus) {
+            console.log('=== TOGGLE FUNCTION CALLED ===');
+            console.log('Toggling product:', productId, 'from', currentStatus);
+            
             const newStatus = currentStatus === 'Activo' ? 'Inactivo' : 'Activo';
+            console.log('New status will be:', newStatus);
             
             // Actualizar el producto en el array
-            const productIndex = currentProducts.findIndex(p => p.id == productId);
+            let productIndex = currentProducts.findIndex(p => p.id == productId);
+            console.log('Product index found:', productIndex);
+            
+            if (productIndex === -1) {
+                // Si no está en currentProducts, agregarlo primero desde los datos originales
+                console.log('Product not found in currentProducts, loading from original data...');
+                const originalProducts = @json(array_values($products));
+                const originalProduct = originalProducts.find(p => p.id == productId);
+                
+                if (originalProduct) {
+                    currentProducts.push(originalProduct);
+                    productIndex = currentProducts.findIndex(p => p.id == productId);
+                    console.log('Product restored from original data, new index:', productIndex);
+                }
+            }
+            
             if (productIndex !== -1) {
                 currentProducts[productIndex].status = newStatus;
+                console.log('Product status updated in array:', currentProducts[productIndex]);
                 
                 // Guardar en cache
                 saveProductsToCache();
+                console.log('Cache saved after toggle');
                 
                 // Actualizar la tabla
                 updateProductStatusInTable(productId, newStatus);
@@ -751,6 +806,7 @@
                 // Mostrar mensaje de éxito
                 showSuccessMessage('Producto ' + (newStatus === 'Activo' ? 'activado' : 'desactivado') + ' correctamente');
             } else {
+                console.error('Product not found for toggle. Available IDs:', currentProducts.map(p => p.id));
                 showErrorMessage('No se encontró el producto para cambiar el estatus');
             }
         }
@@ -783,6 +839,38 @@
                     }
                 }
             });
+        }
+
+        function restoreTableRow(product) {
+            console.log('Restoring table row for product:', product);
+            
+            // Buscar si la fila ya existe pero está oculta
+            const tableRows = document.querySelectorAll('table tbody tr');
+            for (let row of tableRows) {
+                const editButton = row.querySelector('button[onclick*="openEditModal"]');
+                if (editButton) {
+                    const onclickAttr = editButton.getAttribute('onclick');
+                    const productIdMatch = onclickAttr.match(/openEditModal\((\d+)\)/);
+                    
+                    if (productIdMatch && parseInt(productIdMatch[1]) === product.id) {
+                        // La fila existe, restaurarla
+                        console.log('Found existing row, restoring it');
+                        row.style.display = '';
+                        row.style.opacity = '1';
+                        row.style.transform = 'translateX(0)';
+                        row.style.backgroundColor = '#d4edda';
+                        
+                        setTimeout(() => {
+                            row.style.backgroundColor = '';
+                        }, 2000);
+                        return;
+                    }
+                }
+            }
+            
+            // Si no se encuentra la fila, mostrar mensaje indicando recargar página
+            console.log('Row not found, showing restore message');
+            showSuccessMessage('Producto restaurado: ' + product.name + '. Recarga la página para verlo en la tabla.');
         }
 
         function updateProductStatusInTable(productId, newStatus) {
@@ -862,8 +950,6 @@
             const tableBody = document.querySelector('table tbody');
             if (tableBody) {
                 const rows = tableBody.querySelectorAll('tr');
-                const rowsToRemove = [];
-                
                 rows.forEach(row => {
                     const cells = row.querySelectorAll('td');
                     if (cells.length >= 6) {
@@ -911,217 +997,41 @@
                                     setTimeout(() => {
                                         row.style.backgroundColor = '';
                                     }, 2000);
-                                } else {
-                                    // El producto fue eliminado, marcar fila para remover
-                                    console.log('Product', productId, 'not found in cache, marking for removal');
-                                    rowsToRemove.push(row);
                                 }
                             }
                         }
                     }
                 });
-                
-                // Eliminar filas de productos que fueron borrados
-                rowsToRemove.forEach(row => {
-                    row.style.backgroundColor = '#f8d7da';
-                    row.style.transition = 'all 0.3s ease';
-                    setTimeout(() => {
-                        row.style.opacity = '0';
-                        setTimeout(() => {
-                            row.remove();
-                            console.log('Removed deleted product row from table');
-                        }, 300);
-                    }, 500);
-                });
             }
         }
+
+        // Hacer funciones accesibles globalmente
+        window.openEditModal = openEditModal;
+        window.deleteProduct = deleteProduct;
+        window.toggleProductStatus = toggleProductStatus;
+        window.closeModal = closeModal;
+        window.saveProduct = saveProduct;
 
         // Inicializar la tabla cuando la página carga
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing...');
+            console.log('Functions available:', {
+                openEditModal: typeof window.openEditModal,
+                deleteProduct: typeof window.deleteProduct,
+                toggleProductStatus: typeof window.toggleProductStatus
+            });
+            
             setTimeout(rebuildTableFromCache, 100); // Pequeño delay para asegurar que el DOM está listo
         });
 
-        // Funciones para el modal de agregar producto
-        let isAddingProduct = false;
-
-        function openAddProductModal() {
-            const modal = document.getElementById('addProductModal');
-            modal.classList.add('show');
-            // Limpiar formulario
-            document.getElementById('addProductForm').reset();
-            // Resetear estado
-            isAddingProduct = false;
-            const addButton = document.querySelector('#addProductModal .btn-primary');
-            addButton.disabled = false;
-            addButton.innerHTML = 'Agregar Producto';
-        }
-
-        function closeAddProductModal() {
-            const modal = document.getElementById('addProductModal');
-            modal.classList.remove('show');
-        }
-
-        async function addProduct() {
-            // Prevenir múltiples clics
-            if (isAddingProduct) {
-                return;
-            }
-
-            const form = document.getElementById('addProductForm');
-            const formData = new FormData(form);
-            
-            const productData = {
-                name: formData.get('name'),
-                category: formData.get('category'),
-                price: parseFloat(formData.get('price')),
-                status: formData.get('status'),
-                image: formData.get('image') || null
-            };
-
-            // Validación básica
-            if (!productData.name || !productData.category || !productData.price) {
-                showErrorMessage('Por favor completa todos los campos requeridos');
-                return;
-            }
-
-            // Deshabilitar botón y mostrar estado de carga
-            isAddingProduct = true;
-            const addButton = document.querySelector('#addProductModal .btn-primary');
-            addButton.disabled = true;
-            addButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Agregando...';
-
-            try {
-                const response = await fetch('{{ route("products.store") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-                    },
-                    body: JSON.stringify(productData)
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    // Agregar el nuevo producto al array
-                    currentProducts.push(result.product);
-                    
-                    // Guardar en cache
-                    saveProductsToCache();
-                    
-                    // Agregar la nueva fila a la tabla
-                    addProductToTable(result.product);
-                    
-                    // Cerrar modal
-                    closeAddProductModal();
-                    
-                    // Mostrar mensaje de éxito
-                    showSuccessMessage('Producto agregado: ' + result.product.name);
-                } else {
-                    // Mostrar errores específicos si existen
-                    if (result.errors && result.errors.name) {
-                        showErrorMessage('El nombre del producto ya existe');
-                    } else {
-                        showErrorMessage(result.message || 'Error al agregar el producto');
-                    }
-                }
-            } catch (error) {
-                console.error('Error adding product:', error);
-                showErrorMessage('Error de conexión al agregar el producto');
-            } finally {
-                // Rehabilitar botón y resetear estado
-                isAddingProduct = false;
-                if (addButton) {
-                    addButton.disabled = false;
-                    addButton.innerHTML = 'Agregar Producto';
-                }
-            }
-        }
-
-        function addProductToTable(product) {
-            const tableBody = document.querySelector('table tbody');
-            
-            // Mapear categoría a slug
-            let categorySlug;
-            switch(product.category) {
-                case 'Bebidas Frías':
-                    categorySlug = 'cold';
-                    break;
-                case 'Bebidas calientes':
-                    categorySlug = 'hot';
-                    break;
-                case 'Tés e Infusiones':
-                    categorySlug = 'tea';
-                    break;
-                case 'Repostería':
-                    categorySlug = 'bakery';
-                    break;
-                default:
-                    categorySlug = 'snacks';
-            }
-            
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td class="product-name">${product.name}</td>
-                <td>
-                    <div class="product-image-placeholder"></div>
-                </td>
-                <td>${product.category}</td>
-                <td>$${product.price.toFixed(2)}</td>
-                <td>
-                    <span class="badge ${product.status === 'Activo' ? 'badge-success' : 'badge-danger'}">
-                        ${product.status}
-                    </span>
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        <a href="{{ route('products.show', ['category' => '__CATEGORY__', 'product' => '__ID__']) }}" class="btn-action view" title="Ver">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        <button class="btn-action edit" title="Editar" onclick="openEditModal(${product.id})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-action delete" title="Eliminar" onclick="deleteProduct(${product.id}, '${product.name.replace(/'/g, "\\'")}')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                        <button class="btn-action toggle" title="${product.status === 'Activo' ? 'Desactivar' : 'Activar'}" onclick="toggleProductStatus(${product.id}, '${product.status}')">
-                            <i class="fas fa-toggle-${product.status === 'Activo' ? 'on' : 'off'}"></i>
-                        </button>
-                    </div>
-                </td>
-            `;
-            
-            // Reemplazar placeholders con valores reales
-            const viewLink = newRow.querySelector('a[href*="__CATEGORY__"]');
-            if (viewLink) {
-                viewLink.href = viewLink.href.replace('__CATEGORY__', categorySlug).replace('__ID__', product.id);
-            }
-            
-            // Agregar la fila al principio de la tabla
-            if (tableBody.firstChild) {
-                tableBody.insertBefore(newRow, tableBody.firstChild);
-            } else {
-                tableBody.appendChild(newRow);
-            }
-            
-            // Resaltar la nueva fila
-            newRow.style.backgroundColor = '#d4edda';
-            setTimeout(() => {
-                newRow.style.backgroundColor = '';
-            }, 3000);
-        }
-
         // Cerrar modal al hacer clic fuera del contenido
         window.onclick = function(event) {
-            const editModal = document.getElementById('editProductModal');
-            const addModal = document.getElementById('addProductModal');
-            
-            if (event.target == editModal) {
+            const modal = document.getElementById('editProductModal');
+            if (event.target == modal) {
                 closeModal();
             }
-            if (event.target == addModal) {
-                closeAddProductModal();
-            }
         }
+        
+        console.log('Script loaded successfully');
     </script>
 @endsection
