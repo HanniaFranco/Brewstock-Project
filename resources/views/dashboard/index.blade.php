@@ -162,6 +162,7 @@
             <div class="subtitle">en el último período</div>
         </div>
 
+        @if(Auth::check() && Auth::user()->role_id != 2)
         <div class="stat-card">
             <h3>Ventas de hoy</h3>
             <div class="value">$0.00</div>
@@ -173,6 +174,7 @@
             <div class="value">0</div>
             <div class="subtitle">por revisar</div>
         </div>
+        @endif
     </div>
 
     <!-- Main Content Row -->
@@ -191,6 +193,7 @@
             </div>
         </div>
 
+        @if(Auth::check() && Auth::user()->role_id != 2)
         <!-- Alertas Recientes -->
         <div class="card">
             <div class="card-header">
@@ -204,8 +207,10 @@
                 </div>
             </div>
         </div>
+        @endif
     </div>
 
+    @if(Auth::check() && Auth::user()->role_id != 2)
     <!-- Últimas Ventas -->
     <div class="card">
         <div class="card-header">
@@ -218,20 +223,32 @@
                     <tr>
                         <th>Fecha</th>
                         <th>Usuario</th>
-                        <th>Productos</th>
                         <th>Total</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td colspan="4">
-                            <div class="empty-state">
-                                No hay ventas registradas
-                            </div>
-                        </td>
-                    </tr>
+                    @forelse ($latestSales as $sale)
+                        <tr>
+                            <td>{{ \Carbon\Carbon::parse($sale->sale_date)->format('d/m/Y H:i') }}</td>
+                            <td>{{ $sale->user->name }}</td>
+                            <td>${{ number_format($sale->total, 2) }}</td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-outline-primary">Ver</a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4">
+                                <div class="empty-state">
+                                    No hay ventas registradas
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
     </div>
+    @endif
 @endsection

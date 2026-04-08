@@ -6,6 +6,8 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\SystemLogMiddleware;
+use App\Http\Middleware\RestrictSalesAccess;
+use App\Http\Middleware\RestrictAlertsAccess;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -21,6 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
+            'restrict.sales' => RestrictSalesAccess::class,
+            'restrict.alerts' => RestrictAlertsAccess::class,
         ]);
 
         $middleware->trustProxies(

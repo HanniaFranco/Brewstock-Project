@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Inventario')
-@section('page_title', 'Inventario')
+@section('title', 'Categorías de Inventario')
+@section('page_title', 'Categorías de Inventario')
 
 @section('styles')
     <style>
@@ -100,7 +100,11 @@
 @endsection
 
 @section('content')
-    
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">Categorías de Inventario</h1>
+    </div>
+
     <!-- Categories Grid -->
     <div class="categories-grid">
         <!-- Café y Derivados -->
