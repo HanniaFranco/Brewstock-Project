@@ -3,105 +3,91 @@
 @section('title', 'Ingredientes')
 @section('page_title', 'Ingredientes')
 
-@section('styles')
-    <style>
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin-bottom: 20px;
-        }
+@section('content')
+<div class="container py-4">
 
-        .stat-card {
-            background: #f5f5f0;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            border: 2px solid #8fbc8f;
-            text-align: center;
-            min-height: 180px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
+    <div class="grid-categories">
+        @php
+            $categories = [
+                ['name' => 'Café y Derivados', 'icon' => 'cafe.png'],
+                ['name' => 'Tés e Infusiones', 'icon' => 'te.png'],
+                ['name' => 'Lácteos y Alternativas', 'icon' => 'leche.png'],
+                ['name' => 'Panadería y Repostería', 'icon' => 'pan.png'],
+                ['name' => 'Snacks', 'icon' => 'snack.png'],
+                ['name' => 'Bebidas Frías', 'icon' => 'bebida.png'],
+                ['name' => 'Ingredientes Básicos', 'icon' => 'ingredientes.png'],
+                ['name' => 'Desechables y Empaques', 'icon' => 'empaques.png'],
+                ['name' => 'Limpieza e Insumos', 'icon' => 'limpieza.png'],
+            ];
+        @endphp
 
-        .stat-card h3 {
-            color: #5a7248;
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            margin-top: 15px;
-        }
+        @foreach ($categories as $category)
+            <div class="category-card">
+                <a href="{{ route('ingredients.index', ['category' => $category['name']]) }}" class="category-card">
+                <img src="{{ asset('assets/' . $category['icon']) }}" alt="{{ $category['name'] }}">
+                <p>{{ $category['name'] }}</p>
+                </a>
+            </div>
+            
+        @endforeach
+    </div>
 
-        .content-row {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .card {
-            background: #f5f5f0;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            padding: 0;
-            border: 2px solid #8fbc8f;
-        }
-
-        .card-header {
-            padding: 20px 25px;
-            border-bottom: none;
-            background-color: transparent;
-            text-align: center;
-        }
-
-        .card-header h5 {
-            margin: 0;
-            color: #5a7248;
-            font-weight: 600;
-            font-size: 16px;
-        }
-
-        .card-body {
-            padding: 20px 25px;
-        }
-
-        .bottom-card {
-            background: #f5f5f0;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            padding: 30px;
-            min-height: 150px;
-            border: 2px solid #8fbc8f;
-        }
-    </style>
+</div>
 @endsection
 
-@section('content')
-    <!-- Stats Cards -->
-    <div class="dashboard-grid">
-        <div class="stat-card">
-            <h3>Ingredientes Activos</h3>
-        </div>
-        <div class="stat-card">
-            <h3>Stock Bajo</h3>
-        </div>
-    </div>
+@section('styles')
+    <style>
+        .grid-categories {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
 
-    <!-- Main Content Row -->
-    <div class="content-row">
-        <div class="card">
-            <div class="card-header">
-                <h5>Lista de Ingredientes</h5>
-            </div>
-            <div class="card-body">
-                <p>Contenido de ingredientes aquí...</p>
-            </div>
-        </div>
-    </div>
+        .category-card {
+            background-color: #E1EBBE;
+            border-radius: 15px;
+            text-align: center;
+            padding: 20px;
+            transition: 0.2s;
+            cursor: pointer;
+        }
 
-    <!-- Bottom Card -->
-    <div class="bottom-card">
-    </div>
+        .category-card:hover {
+            transform: scale(1.05);
+        }
+
+        .category-card img {
+            width: 60px;
+            margin-bottom: 10px;
+        }
+
+        .category-card p {
+            font-weight: 600;
+            color: #4A5A3A;
+        }
+
+        .category-card {
+        text-decoration: none;
+        list-style: none;
+        border: none;
+        outline: none;
+    }
+
+    .category-card:focus,
+    .category-card:active {
+        outline: none;
+        border: none;
+    }
+
+    .category-card p {
+        margin: 0;
+    }
+
+    .category-card {
+        display: block;
+        color: inherit;
+    }
+    </style>
 @endsection

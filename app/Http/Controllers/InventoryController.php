@@ -14,6 +14,9 @@ class InventoryController extends Controller
     public function ingredients()
     {
         return view('inventory.ingredients');
+
+        $categories = Category::all(); 
+        return view('inventory.ingredients', compact('categories'));
     }
 
     public function recipes()

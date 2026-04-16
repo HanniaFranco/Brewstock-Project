@@ -9,6 +9,7 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\AlertsController;
 use App\Http\Controllers\LogsController;
+use App\Http\Controllers\IngredientController;
 
 Route::get('/logo.png', function () {
     $candidates = [
@@ -93,3 +94,25 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/', function () {
     return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
+
+// Ingredients Controller Routes (Inside Inventory)
+Route::get('/ingredients', [IngredientController::class, 'index'])->name('ingredients.index');
+Route::get('/ingredients/create', [IngredientController::class, 'create'])->name('ingredients.create');
+Route::post('/ingredients', [IngredientController::class, 'store'])->name('ingredients.store');
+
+Route::get('/ingredients/{id}/edit', [IngredientController::class, 'edit'])->name('ingredients.edit');
+Route::put('/ingredients/{id}', [IngredientController::class, 'update'])->name('ingredients.update');
+
+Route::delete('/ingredients/{id}', [IngredientController::class, 'destroy'])->name('ingredients.destroy');
+
+Route::get('/ingredients/export/pdf', [IngredientController::class, 'export'])
+    ->name('ingredients.export');
+
+Route::post('/ingredients/{id}/toggle', [IngredientController::class, 'toggle'])
+    ->name('ingredients.toggle');
+
+Route::get('/ingredients/{id}', [IngredientController::class, 'show'])
+    ->name('ingredients.show');
+
+Route::get('/ingredients/{id}/edit', [IngredientController::class, 'edit'])->name('ingredients.edit');
+Route::put('/ingredients/{id}', [IngredientController::class, 'update'])->name('ingredients.update');

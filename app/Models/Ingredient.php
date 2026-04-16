@@ -12,11 +12,14 @@ class Ingredient extends Model
 
     protected $fillable = [
         'name',
+        'category',
+        'cost_per_unit',
         'unit',
         'current_stock',
         'minimum_stock',
         'expiration_date',
-        'cost_per_unit',
+        'image',
+        'status'
     ];
 
     public function movements()
