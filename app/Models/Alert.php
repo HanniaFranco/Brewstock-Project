@@ -11,12 +11,14 @@ class Alert extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'user_id',
         'ingredient_id',
         'product_id',
         'type',
         'message',
         'is_read',
         'read_at',
+        'created_at',
     ];
 
     protected function casts(): array

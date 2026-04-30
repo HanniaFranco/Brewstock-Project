@@ -469,6 +469,75 @@
             });
         });
     </script>
+    <!-- Toast container and polling for alerts -->
+    <div aria-live="polite" aria-atomic="true" class="position-fixed" style="top: 1rem; right: 1rem; z-index: 1100;">
+        <div id="toast-container"></div>
+    </div>
+    <script>
+        async function fetchUnreadAlerts() {
+            try {
+                const res = await fetch('{{ route('alerts.unread') }}', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                if (!res.ok) return;
+                const alerts = await res.json();
+                alerts.forEach(showToastForAlert);
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        function showToastForAlert(alert) {
+            // avoid duplicates: check existing by data-id
+            if (document.querySelector(`#toast-${alert.id}`)) return;
+            const container = document.getElementById('toast-container');
+            const toastEl = document.createElement('div');
+            toastEl.className = 'toast align-items-center text-bg-warning border-0';
+            toastEl.id = `toast-${alert.id}`;
+            toastEl.role = 'alert';
+            toastEl.ariaLive = 'assertive';
+            toastEl.ariaAtomic = 'true';
+            toastEl.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${escapeHtml(alert.message)}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            container.appendChild(toastEl);
+            const bsToast = new bootstrap.Toast(toastEl, { delay: 10000 });
+            bsToast.show();
+
+            // mark read when hidden or closed
+            toastEl.addEventListener('hidden.bs.toast', () => markAlertRead(alert.id));
+        }
+
+        function escapeHtml(text) {
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        async function markAlertRead(id) {
+            try {
+                await fetch(`/alerts/${id}/read`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({})
+                });
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        // Poll every 30s
+        setInterval(fetchUnreadAlerts, 30000);
+        // initial fetch
+        document.addEventListener('DOMContentLoaded', fetchUnreadAlerts);
+    </script>
     @yield('scripts')
 </body>
 </html>

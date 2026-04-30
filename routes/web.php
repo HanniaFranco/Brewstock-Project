@@ -93,6 +93,9 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('restrict.alerts')->group(function () {
         Route::get('/alerts', [AlertsController::class, 'index'])->name('alerts.index');
         Route::get('/alerts/settings', [AlertsController::class, 'settings'])->name('alerts.settings');
+        Route::post('/alerts/settings', [AlertsController::class, 'store'])->name('alerts.settings.store');
+        Route::get('/alerts/unread', [AlertsController::class, 'unread'])->name('alerts.unread');
+        Route::post('/alerts/{id}/read', [AlertsController::class, 'markRead'])->name('alerts.read');
     });
 
     // Admin users management routes

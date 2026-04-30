@@ -96,7 +96,27 @@
                 <h5>Configuración de Alertas</h5>
             </div>
             <div class="card-body">
-                <p>Contenido de configuración aquí...</p>
+                @if(session('success'))
+                    <div class="alert alert-success">{{ session('success') }}</div>
+                @endif
+
+                <form method="POST" action="{{ route('alerts.settings.store') }}">
+                    @csrf
+
+                    <h6>Ingredientes</h6>
+                    <div class="mb-3">
+                        @foreach($ingredients as $ingredient)
+                            <?php $key = 'i_'.$ingredient->id; $s = $settings[$key] ?? null; ?>
+                            <div class="form-group">
+                                <label>{{ $ingredient->name }} ({{ $ingredient->unit }})</label>
+                                <input type="hidden" name="ingredient[{{ $ingredient->id }}][id]" value="{{ $ingredient->id }}">
+                                <input type="number" step="0.01" min="0" name="ingredient[{{ $ingredient->id }}][threshold]" value="{{ $s->threshold ?? '' }}" class="form-control" placeholder="Cantidad objetivo para alerta (ej: 0.50)">
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <button class="btn btn-primary">Guardar configuración</button>
+                </form>
             </div>
         </div>
     </div>
