@@ -14,6 +14,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(RoleSeeder::class);
         $this->call(UserSeeder::class);
+        $this->call(ProductSeeder::class);
+        $this->call(IngredientSeeder::class);
+        $this->call(RecipeSeeder::class);
+        $this->call(RecipeIngredientSeeder::class);
+        $this->call(AlertSeeder::class);
+        $this->call(InventoryMovementSeeder::class);
     }
 }
