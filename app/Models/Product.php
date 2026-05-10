@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Product extends Model
 {
@@ -12,9 +13,13 @@ class Product extends Model
         'name',
         'price',
         'category',
-        'image',
         'active',
     ];
+
+    public function images(): MorphMany
+    {
+        return $this->morphMany(Image::class, 'imageable');
+    }
 
     public function recipe()
     {
@@ -36,4 +41,8 @@ class Product extends Model
         $this->active = $value === 'Activo';
     }
 
+    public function getImageAttribute()
+    {
+        return $this->images->first()?->path;
+    }
 }
