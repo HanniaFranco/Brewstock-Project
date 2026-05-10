@@ -90,6 +90,14 @@
             font-size: 12px;
         }
 
+        .product-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
         .product-name {
             font-weight: 500;
             color: #333;
@@ -235,7 +243,11 @@
                     <tr>
                         <td class="product-name">{{ $product['name'] }}</td>
                         <td>
-                            <div class="product-image-placeholder"></div>
+                            @if($product['image'])
+                                <img src="{{ asset('images/' . $product['image']) }}" alt="{{ $product['name'] }}" class="product-image">
+                            @else
+                                <div class="product-image-placeholder"></div>
+                            @endif
                         </td>
                         <td>{{ $product['category'] }}</td>
                         <td>${{ number_format($product['price'], 2) }}</td>
@@ -285,12 +297,12 @@
     </div>
 
     <!-- Edit Product Modal -->
-    <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editProductModalLabel">Editar Producto</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <button type="button" class="btn-close" onclick="closeModal()" aria-label="Close">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -318,6 +330,13 @@
                         <div class="form-group">
                             <label for="editProductPrice" class="form-label">Precio</label>
                             <input type="number" class="form-control" id="editProductPrice" name="price" step="0.01" min="0" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editProductImage" class="form-label">Imagen (opcional)</label>
+                            <input type="file" class="form-control" id="editProductImage" name="image" accept="image/*">
+                            <input type="hidden" id="editProductImageName" name="image_name">
+                            <div id="editProductImagePreview" class="image-preview mt-2"></div>
                         </div>
 
                         <div class="form-group">
@@ -381,7 +400,9 @@
 
                         <div class="form-group">
                             <label for="addProductImage" class="form-label">Imagen (opcional)</label>
-                            <input type="text" class="form-control" id="addProductImage" name="image" placeholder="nombre_de_imagen.jpg">
+                            <input type="file" class="form-control" id="addProductImage" name="image" accept="image/*">
+                            <input type="hidden" id="addProductImageName" name="image_name">
+                            <div id="addProductImagePreview" class="image-preview mt-2"></div>
                         </div>
                     </form>
                 </div>
@@ -526,6 +547,31 @@
                 margin: 50px auto;
             }
         }
+
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+
+        .image-preview .placeholder {
+            color: #6c757d;
+            font-size: 14px;
+            text-align: center;
+            padding: 20px;
+        }
     </style>
 
     <script>
@@ -575,8 +621,25 @@
         }
 
         function openEditModal(productId) {
-            const product = currentProducts.find(p => p.id == productId);
-            if (!product) return;
+            console.log('openEditModal called with productId:', productId);
+            console.log('currentProducts available:', currentProducts);
+            
+            let product = currentProducts.find(p => p.id == productId);
+            console.log('found product in currentProducts:', product);
+            
+            // Si no se encuentra el producto en currentProducts, recargar desde los datos originales
+            if (!product) {
+                console.log('Product not found in currentProducts, loading from original data...');
+                const originalProducts = @json($allProducts ?? $products);
+                product = originalProducts.find(p => p.id == productId);
+                console.log('found product in original data:', product);
+            }
+            
+            if (!product) {
+                console.error('Product not found with ID:', productId);
+                alert('No se encontró el producto con ID: ' + productId);
+                return;
+            }
 
             document.getElementById('editProductId').value = product.id;
             document.getElementById('editProductName').value = product.name;
@@ -585,50 +648,89 @@
             document.getElementById('editProductStatus').value = product.status;
 
             const modal = document.getElementById('editProductModal');
+            modal.removeAttribute('aria-hidden');
             modal.classList.add('show');
+            console.log('Modal opened successfully');
         }
 
         function closeModal() {
             const modal = document.getElementById('editProductModal');
+            // Remover focus del elemento antes de ocultar el modal
+            const activeElement = document.activeElement;
+            if (activeElement && modal.contains(activeElement)) {
+                activeElement.blur();
+            }
             modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
         }
 
-        function saveProduct() {
+        async function saveProduct() {
             const form = document.getElementById('editProductForm');
             const formData = new FormData(form);
             
             const productId = parseInt(formData.get('id'));
-            const productData = {
-                name: formData.get('name'),
-                category: formData.get('category'),
-                price: parseFloat(formData.get('price')),
-                status: formData.get('status')
-            };
-
-            console.log('Saving product:', productId, productData);
+            const imageFile = document.getElementById('editProductImage').files[0];
             
-            // Actualizar el producto en el array currentProducts
-            const productIndex = currentProducts.findIndex(p => p.id == productId);
-            if (productIndex !== -1) {
-                currentProducts[productIndex] = { ...currentProducts[productIndex], ...productData };
-                console.log('Updated product in array:', currentProducts[productIndex]);
+            // Crear FormData para la petición
+            const requestData = new FormData();
+            requestData.append('_method', 'PUT'); // Indicar a Laravel que es PUT
+            requestData.append('id', productId);
+            requestData.append('name', formData.get('name'));
+            requestData.append('category', formData.get('category'));
+            requestData.append('price', formData.get('price'));
+            requestData.append('status', formData.get('status'));
+            
+            if (imageFile) {
+                requestData.append('image', imageFile);
+            } else if (formData.get('image_name')) {
+                requestData.append('image_name', formData.get('image_name'));
+            }
+
+            console.log('Saving product:', productId, Array.from(requestData.entries()));
+            
+            // Hacer llamada real al backend para actualizar
+            const response = await fetch('/products/' + productId, {
+                method: 'POST', // Usar POST con _method para PUT
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: requestData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Actualizar el array local
+                const finalProductIndex = currentProducts.findIndex(p => p.id == productId);
+                const updatedProductData = {
+                    name: formData.get('name'),
+                    category: formData.get('category'),
+                    price: parseFloat(formData.get('price')),
+                    status: formData.get('status'),
+                    image: result.product?.image || formData.get('image_name')
+                };
+                
+                if (finalProductIndex !== -1) {
+                    currentProducts[finalProductIndex] = { ...currentProducts[finalProductIndex], ...updatedProductData };
+                } else {
+                    const originalProducts = @json($allProducts ?? $products);
+                    const originalProduct = originalProducts.find(p => p.id == productId);
+                    currentProducts.push({ ...originalProduct, ...updatedProductData });
+                }
                 
                 // Guardar en cache
                 saveProductsToCache();
                 
                 // Actualizar la tabla en el DOM
-                updateProductInTable(productId, productData);
+                updateProductInTable(productId, updatedProductData);
                 
                 // Actualizar el botón de toggle si el estatus cambió
-                if (productData.status !== currentProducts[productIndex].status) {
-                    updateToggleButton(productId, productData.status);
-                }
+                updateToggleButton(productId, updatedProductData.status);
                 
                 // Mostrar mensaje de éxito
-                showSuccessMessage('Producto actualizado: ' + productData.name);
+                showSuccessMessage('Producto actualizado: ' + updatedProductData.name);
             } else {
-                console.error('Product not found in array');
-                showErrorMessage('No se encontró el producto para actualizar');
+                showErrorMessage(result.message || 'Error al actualizar el producto');
             }
             
             closeModal();
@@ -644,9 +746,15 @@
                     const cells = row.querySelectorAll('td');
                     if (cells.length >= 6) {
                         cells[0].textContent = productData.name; // Nombre (columna 0)
-                        // cells[1] es la imagen (no se actualiza)
+                        
+                        // Actualizar imagen si hay una nueva (columna 1)
+                        if (productData.image) {
+                            const imageCell = cells[1];
+                            imageCell.innerHTML = `<img src="/images/${productData.image}" alt="${productData.name}" class="product-image">`;
+                        }
+                        
                         cells[2].textContent = productData.category; // Categoría (columna 2)
-                        cells[3].textContent = '$' + productData.price.toFixed(2); // Precio (columna 3)
+                        cells[3].textContent = '$' + parseFloat(productData.price).toFixed(2); // Precio (columna 3)
                         
                         // Actualizar el badge de estatus (columna 4)
                         const statusBadge = cells[4].querySelector('.badge');
@@ -875,13 +983,13 @@
                             
                             if (productIdMatch) {
                                 const productId = parseInt(productIdMatch[1]);
-                                const cachedProduct = currentProducts.find(p => p.id === productId);
+                                const cachedProduct = currentProducts.find(p => p.id == productId);
                                 
                                 if (cachedProduct) {
                                     // Actualizar celdas con datos cacheados
                                     cells[0].textContent = cachedProduct.name;
                                     cells[2].textContent = cachedProduct.category;
-                                    cells[3].textContent = '$' + cachedProduct.price.toFixed(2);
+                                    cells[3].textContent = '$' + parseFloat(cachedProduct.price).toFixed(2);
                                     
                                     // Actualizar badge de estatus
                                     const statusBadge = cells[4].querySelector('.badge');
@@ -936,9 +1044,56 @@
             }
         }
 
-        // Inicializar la tabla cuando la página carga
+        // Funciones para manejo de imágenes
+        function handleImageUpload(input, previewId, hiddenInputId) {
+            const file = input.files[0];
+            const preview = document.getElementById(previewId);
+            const hiddenInput = document.getElementById(hiddenInputId);
+            
+            if (file) {
+                // Validar que sea una imagen
+                if (!file.type.startsWith('image/')) {
+                    showErrorMessage('Por favor selecciona un archivo de imagen válido');
+                    input.value = '';
+                    return;
+                }
+                
+                // Validar tamaño (máximo 2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    showErrorMessage('La imagen no debe superar los 2MB');
+                    input.value = '';
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                    hiddenInput.value = file.name;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.innerHTML = '<div class="placeholder">Sin imagen</div>';
+                hiddenInput.value = '';
+            }
+        }
+
+        // Event listeners para uploads de imágenes
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(rebuildTableFromCache, 100); // Pequeño delay para asegurar que el DOM está listo
+            // Edit product image
+            const editImageInput = document.getElementById('editProductImage');
+            if (editImageInput) {
+                editImageInput.addEventListener('change', function() {
+                    handleImageUpload(this, 'editProductImagePreview', 'editProductImageName');
+                });
+            }
+            
+            // Add product image
+            const addImageInput = document.getElementById('addProductImage');
+            if (addImageInput) {
+                addImageInput.addEventListener('change', function() {
+                    handleImageUpload(this, 'addProductImagePreview', 'addProductImageName');
+                });
+            }
         });
 
         // Funciones para el modal de agregar producto
@@ -1067,7 +1222,7 @@
                     <div class="product-image-placeholder"></div>
                 </td>
                 <td>${product.category}</td>
-                <td>$${product.price.toFixed(2)}</td>
+                <td>$${parseFloat(product.price).toFixed(2)}</td>
                 <td>
                     <span class="badge ${product.status === 'Activo' ? 'badge-success' : 'badge-danger'}">
                         ${product.status}

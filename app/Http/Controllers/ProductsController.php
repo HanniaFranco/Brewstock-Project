@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Image;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ProductsController extends Controller
 {
@@ -109,22 +111,6 @@ class ProductsController extends Controller
 
     public function showCategoryProducts($category)
     {
-        // Datos de ejemplo para productos
-        $allProducts = [
-            ['id' => 1, 'name' => 'Iced Americano', 'image' => 'iced_americano.jpg', 'category' => 'Bebidas Frías', 'price' => 24.00, 'status' => 'Activo'],
-            ['id' => 2, 'name' => 'Iced Latte', 'image' => 'iced_latte.jpg', 'category' => 'Bebidas Frías', 'price' => 24.00, 'status' => 'Activo'],
-            ['id' => 3, 'name' => 'Frappé de Café', 'image' => 'frappe_cafe.jpg', 'category' => 'Bebidas Frías', 'price' => 24.00, 'status' => 'Activo'],
-            ['id' => 4, 'name' => 'Iced Matcha Latte', 'image' => 'iced_matcha_latte.jpg', 'category' => 'Bebidas Frías', 'price' => 24.00, 'status' => 'Activo'],
-            ['id' => 5, 'name' => 'Café Americano', 'image' => 'americano.jpg', 'category' => 'Bebidas calientes', 'price' => 20.00, 'status' => 'Activo'],
-            ['id' => 6, 'name' => 'Café Latte', 'image' => 'latte.jpg', 'category' => 'Bebidas calientes', 'price' => 22.00, 'status' => 'Activo'],
-            ['id' => 7, 'name' => 'Cappuccino', 'image' => 'cappuccino.jpg', 'category' => 'Bebidas calientes', 'price' => 22.00, 'status' => 'Activo'],
-            ['id' => 8, 'name' => 'Té Verde', 'image' => 'te_verde.jpg', 'category' => 'Tés e Infusiones', 'price' => 18.00, 'status' => 'Activo'],
-            ['id' => 9, 'name' => 'Té Negro', 'image' => 'te_negro.jpg', 'category' => 'Tés e Infusiones', 'price' => 18.00, 'status' => 'Activo'],
-            ['id' => 10, 'name' => 'Croissant', 'image' => 'croissant.jpg', 'category' => 'Repostería', 'price' => 15.00, 'status' => 'Activo'],
-            ['id' => 11, 'name' => 'Muffin', 'image' => 'muffin.jpg', 'category' => 'Repostería', 'price' => 12.00, 'status' => 'Activo'],
-            ['id' => 12, 'name' => 'Mix de Frutos Secos', 'image' => 'frutos_secos.jpg', 'category' => 'Snacks', 'price' => 25.00, 'status' => 'Activo'],
-        ];
-
         // Mapeo de categorías
         $categoryMap = [
             'hot' => 'Bebidas calientes',
@@ -136,42 +122,153 @@ class ProductsController extends Controller
 
         $categoryName = $categoryMap[$category] ?? $category;
         
-        // Filtrar productos por categoría
-        $filteredProducts = array_filter($allProducts, function ($product) use ($categoryName) {
-            return $product['category'] === $categoryName;
-        });
+        // Obtener productos reales de la base de datos filtrados por categoría
+        $products = Product::query()
+            ->where('category', $categoryName)
+            ->get()
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'image' => $product->image,
+                    'category' => $product->category,
+                    'price' => $product->price,
+                    'status' => $product->status,
+                ];
+            });
 
         return view('products.category_products', [
             'categoryName' => $categoryName,
-            'products' => $filteredProducts
+            'products' => $products
         ]);
     }
 
-    public function show($category, $product)
+    public function show($category, $productId)
     {
-        // Datos de ejemplo para todos los productos
-        $allProducts = [
-            ['id' => 1, 'name' => 'Iced Americano', 'image' => 'iced_americano.jpg', 'category' => 'Bebidas Frías', 'price' => 24.00, 'status' => 'Activo', 'description' => 'Café americano servido frío con hielo', 'recipe' => 'Iced Americano'],
-            ['id' => 2, 'name' => 'Iced Latte', 'image' => 'iced_latte.jpg', 'category' => 'Bebidas Frías', 'price' => 24.00, 'status' => 'Activo', 'description' => 'Latte servido frío con leche y hielo', 'recipe' => 'Iced Latte'],
-            ['id' => 3, 'name' => 'Frappé de Café', 'image' => 'frappe_cafe.jpg', 'category' => 'Bebidas Frías', 'price' => 24.00, 'status' => 'Activo', 'description' => 'Bebida helada de café batido', 'recipe' => 'Frappé de Café'],
-            ['id' => 4, 'name' => 'Iced Matcha Latte', 'image' => 'iced_matcha_latte.jpg', 'category' => 'Bebidas Frías', 'price' => 24.00, 'status' => 'Activo', 'description' => 'Latte de té verde matcha servido frío', 'recipe' => 'Iced Matcha Latte'],
-            ['id' => 5, 'name' => 'Café Americano', 'image' => 'americano.jpg', 'category' => 'Bebidas calientes', 'price' => 20.00, 'status' => 'Activo', 'description' => 'Café negro clásico', 'recipe' => 'Café Americano'],
-            ['id' => 6, 'name' => 'Café Latte', 'image' => 'latte.jpg', 'category' => 'Bebidas calientes', 'price' => 22.00, 'status' => 'Activo', 'description' => 'Café con leche vaporizada', 'recipe' => 'Café Latte'],
-            ['id' => 7, 'name' => 'Cappuccino', 'image' => 'cappuccino.jpg', 'category' => 'Bebidas calientes', 'price' => 22.00, 'status' => 'Activo', 'description' => 'Café con leche espuma y cacao', 'recipe' => 'Cappuccino'],
-            ['id' => 8, 'name' => 'Té Verde', 'image' => 'te_verde.jpg', 'category' => 'Tés e Infusiones', 'price' => 18.00, 'status' => 'Activo', 'description' => 'Té verde japonés tradicional', 'recipe' => 'Té Verde'],
-            ['id' => 9, 'name' => 'Té Negro', 'image' => 'te_negro.jpg', 'category' => 'Tés e Infusiones', 'price' => 18.00, 'status' => 'Activo', 'description' => 'Té negro clásico', 'recipe' => 'Té Negro'],
-            ['id' => 10, 'name' => 'Croissant', 'image' => 'croissant.jpg', 'category' => 'Repostería', 'price' => 15.00, 'status' => 'Activo', 'description' => 'Panecillo francés hojaldrado', 'recipe' => 'Croissant'],
-            ['id' => 11, 'name' => 'Muffin', 'image' => 'muffin.jpg', 'category' => 'Repostería', 'price' => 12.00, 'status' => 'Activo', 'description' => 'Pastelito individual de vainilla', 'recipe' => 'Muffin'],
-            ['id' => 12, 'name' => 'Mix de Frutos Secos', 'image' => 'frutos_secos.jpg', 'category' => 'Snacks', 'price' => 25.00, 'status' => 'Activo', 'description' => 'Mezcla de nueces y frutas deshidratadas', 'recipe' => 'Mix de Frutos Secos'],
-        ];
+        // Buscar el producto real en la base de datos
+        $productModel = Product::find((int)$productId);
 
-        // Buscar el producto por ID
-        $product = collect($allProducts)->firstWhere('id', (int)$product);
-
-        if (!$product) {
+        if (!$productModel) {
             abort(404, 'Producto no encontrado');
         }
 
+        // Transformar a array para la vista
+        $product = [
+            'id' => $productModel->id,
+            'name' => $productModel->name,
+            'image' => $productModel->image,
+            'category' => $productModel->category,
+            'price' => $productModel->price,
+            'status' => $productModel->status,
+            'description' => $productModel->description ?? 'Sin descripción',
+            'recipe' => $productModel->name, // El nombre de la receta coincide con el producto
+        ];
+
         return view('products.show', compact('product'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        try {
+            $product = Product::find($id);
+
+            if (!$product) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Producto no encontrado'
+                ], 404);
+            }
+
+            $request->validate([
+                'name' => 'required|string|max:255|unique:products,name,' . $id,
+                'category' => 'required|string|max:255',
+                'price' => 'required|numeric|min:0',
+                'status' => 'required|in:Activo,Inactivo',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'image_name' => 'nullable|string|max:255',
+            ]);
+
+            $updateData = [
+                'name' => $request->name,
+                'category' => $request->category,
+                'price' => $request->price,
+                'status' => $request->status,
+            ];
+
+            // Manejar subida de imagen
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imageName = time() . '_' . $image->getClientOriginalName();
+                $image->move(public_path('images'), $imageName);
+                
+                // Crear registro en tabla de imágenes
+                $imageModel = Image::create([
+                    'path' => $imageName,
+                    'imageable_type' => Product::class,
+                    'imageable_id' => $product->id,
+                ]);
+            } elseif ($request->filled('image_name')) {
+                // Si solo se proporciona el nombre, crear registro sin archivo
+                Image::create([
+                    'path' => $request->image_name,
+                    'imageable_type' => Product::class,
+                    'imageable_id' => $product->id,
+                ]);
+            }
+
+            $product->update($updateData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Producto actualizado correctamente',
+                'product' => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'image' => $product->image,
+                    'category' => $product->category,
+                    'price' => $product->price,
+                    'status' => $product->status,
+                ]
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar el producto: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $product = Product::find($id);
+
+            if (!$product) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Producto no encontrado'
+                ], 404);
+            }
+
+            $product->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Producto eliminado correctamente'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar el producto: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

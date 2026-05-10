@@ -138,6 +138,18 @@
             font-size: 24px;
         }
 
+        .navigation-links {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .separator {
+            color: #6c757d;
+            font-weight: 500;
+        }
+
         @media (max-width: 768px) {
             .product-detail-container {
                 grid-template-columns: 1fr;
@@ -167,23 +179,33 @@
 @section('content')
     <!-- Back Link -->
     @php
-                                    $categorySlug = $product['category'] === 'Bebidas Frías' ? 'cold' : 
-                                                   ($product['category'] === 'Bebidas calientes' ? 'hot' : 
-                                                   ($product['category'] === 'Tés e Infusiones' ? 'tea' : 
-                                                   ($product['category'] === 'Repostería' ? 'bakery' : 'snacks')));
-                                @endphp
-                                <a href="{{ route('products.category', $categorySlug) }}" class="back-link">
-        <i class="fas fa-arrow-left"></i>
-        {{ $product['category'] }}
-    </a>
+        $categorySlug = $product['category'] === 'Bebidas Frías' ? 'cold' : 
+                       ($product['category'] === 'Bebidas calientes' ? 'hot' : 
+                       ($product['category'] === 'Tés e Infusiones' ? 'tea' : 
+                       ($product['category'] === 'Repostería' ? 'bakery' : 'snacks')));
+    @endphp
+    <div class="navigation-links">
+        <a href="{{ route('products.index') }}" class="back-link">
+            <i class="fas fa-arrow-left"></i>
+            Todos los Productos
+        </a>
+        <span class="separator">|</span>
+        <a href="{{ route('products.category', $categorySlug) }}" class="back-link">
+            {{ $product['category'] }}
+        </a>
+    </div>
 
     <!-- Product Detail Container -->
     <div class="product-detail-container">
         <!-- Product Image Section -->
         <div class="product-image-section">
-            <div class="product-image-placeholder">
-                <i class="fas fa-image fa-2x"></i>
-            </div>
+            @if(!empty($product['image']))
+                <img src="/images/{{ $product['image'] }}" alt="{{ $product['name'] }}" style="width: 100%; height: 250px; object-fit: cover; border-radius: 8px;">
+            @else
+                <div class="product-image-placeholder">
+                    <i class="fas fa-image fa-2x"></i>
+                </div>
+            @endif
         </div>
 
         <!-- Product Info Section -->
@@ -203,21 +225,8 @@
 
                 <!-- Sizes -->
                 <div class="form-group">
-                    <label class="form-label">Tamaños</label>
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input type="radio" name="size" value="grande" checked>
-                            Grande
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="size" value="mediano">
-                            Mediano
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="size" value="pequeño">
-                            Pequeño
-                        </label>
-                    </div>
+                    <label class="form-label">Tamaños disponibles</label>
+                    <input type="text" class="form-control" value="Grande, Mediano, Pequeño" readonly>
                 </div>
 
                 <!-- Status -->
@@ -240,66 +249,6 @@
     <!-- Product Icon -->
     <div class="product-icon">
         <i class="fas fa-glass-water"></i>
-    </div>
-
-    <!-- Edit Button -->
-    <div style="position: fixed; bottom: 30px; right: 30px; z-index: 100;">
-        <button class="btn btn-primary btn-lg" onclick="openEditModal({{ $product['id'] }})" style="background: #5a7248; border: none; border-radius: 50px; padding: 15px 25px;">
-            <i class="fas fa-edit"></i> Editar Producto
-        </button>
-    </div>
-
-    <!-- Edit Product Modal -->
-    <div class="modal" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editProductModalLabel">Editar Producto</h5>
-                    <button type="button" class="btn-close" onclick="closeModal()" aria-label="Close">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="editProductForm">
-                        <input type="hidden" id="editProductId" name="id">
-                        
-                        <div class="form-group">
-                            <label for="editProductName" class="form-label">Nombre del producto</label>
-                            <input type="text" class="form-control" id="editProductName" name="name" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="editProductCategory" class="form-label">Categoría</label>
-                            <select class="form-control" id="editProductCategory" name="category" required>
-                                <option value="">Seleccionar categoría</option>
-                                <option value="Bebidas Frías">Bebidas Frías</option>
-                                <option value="Bebidas calientes">Bebidas calientes</option>
-                                <option value="Tés e Infusiones">Tés e Infusiones</option>
-                                <option value="Repostería">Repostería</option>
-                                <option value="Snacks">Snacks</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="editProductPrice" class="form-label">Precio</label>
-                            <input type="number" class="form-control" id="editProductPrice" name="price" step="0.01" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="editProductStatus" class="form-label">Estatus</label>
-                            <select class="form-control" id="editProductStatus" name="status" required>
-                                <option value="Activo">Activo</option>
-                                <option value="Inactivo">Inactivo</option>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="saveProduct()">Guardar Cambios</button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <style>
@@ -427,46 +376,9 @@
 
     <script>
         let currentProduct = @json($product);
-
-        function openEditModal(productId) {
-            console.log('openEditModal called with productId:', productId);
-            console.log('currentProduct:', currentProduct);
-            
-            const product = currentProduct;
-            console.log('found product:', product);
-            if (!product) return;
-
-            document.getElementById('editProductId').value = product.id;
-            document.getElementById('editProductName').value = product.name;
-            document.getElementById('editProductCategory').value = product.category;
-            document.getElementById('editProductPrice').value = product.price;
-            document.getElementById('editProductStatus').value = product.status;
-
-            const modal = document.getElementById('editProductModal');
-            modal.classList.add('show');
-        }
-
-        function closeModal() {
-            console.log('closeModal called');
-            const modal = document.getElementById('editProductModal');
-            console.log('modal element:', modal);
-            modal.classList.remove('show');
-        }
+        let currentProducts = []; // Array local para productos
 
         function saveProduct() {
-            const form = document.getElementById('editProductForm');
-            const formData = new FormData(form);
-            
-            const productId = parseInt(formData.get('id'));
-            const productData = {
-                name: formData.get('name'),
-                category: formData.get('category'),
-                price: parseFloat(formData.get('price')),
-                status: formData.get('status')
-            };
-
-            console.log('Saving product:', productId, productData);
-            
             // Actualizar el producto en el array currentProducts
             const productIndex = currentProducts.findIndex(p => p.id == productId);
             if (productIndex !== -1) {
@@ -487,36 +399,19 @@
         }
 
         function updateProductInfo(productData) {
-            // Actualizar el título de la página
-            const pageTitle = document.querySelector('.page-title');
-            if (pageTitle) {
-                pageTitle.textContent = productData.name;
-            }
-            
             // Actualizar la información del producto en la página
-            const nameElements = document.querySelectorAll('.product-name');
-            nameElements.forEach(el => el.textContent = productData.name);
+            const nameInput = document.querySelector('input[value="' + currentProduct.name + '"]');
+            if (nameInput) nameInput.value = productData.name;
             
-            const priceElements = document.querySelectorAll('.product-price');
-            priceElements.forEach(el => el.textContent = '$' + productData.price.toFixed(2));
+            const categoryInput = document.querySelector('input[value="' + currentProduct.category + '"]');
+            if (categoryInput) categoryInput.value = productData.category;
             
-            const categoryElements = document.querySelectorAll('.product-category');
-            categoryElements.forEach(el => el.textContent = productData.category);
-            
-            const statusElements = document.querySelectorAll('.product-status');
-            statusElements.forEach(el => {
-                el.textContent = productData.status;
-                el.className = 'product-status status-badge ' + (productData.status === 'Activo' ? 'status-active' : 'status-inactive');
-            });
-            
-            // Resaltar los elementos actualizados
-            const updatedElements = document.querySelectorAll('.product-name, .product-price, .product-category, .product-status');
-            updatedElements.forEach(el => {
-                el.style.backgroundColor = '#d4edda';
-                setTimeout(() => {
-                    el.style.backgroundColor = '';
-                }, 2000);
-            });
+            currentProduct = { ...currentProduct, ...productData };
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('editProductModal');
+            modal.classList.remove('show');
         }
 
         function showSuccessMessage(message) {
