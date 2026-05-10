@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductsController;
@@ -9,6 +10,14 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\AlertsController;
 use App\Http\Controllers\LogsController;
+
+// Rutas de usuarios - PRIMERO para evitar conflictos
+Route::get('/users/test', function() {
+    return ['message' => 'Ruta de usuario test funciona', 'controller' => UsersController::class];
+});
+Route::get('/users/create', [UsersController::class, 'create'])->name('users.create');
+Route::post('/users', [UsersController::class, 'store'])->name('users.store');
+Route::get('/users/nuevo', [UsersController::class, 'create'])->name('users.nuevo');
 
 Route::get('/logo.png', function () {
     $candidates = [
@@ -65,6 +74,7 @@ Route::middleware(['auth'])->group(function () {
     // Products routes
     Route::get('/products', [ProductsController::class, 'index'])->name('products.index');
     Route::post('/products', [ProductsController::class, 'store'])->name('products.store');
+    Route::put('/products/{id}', [ProductsController::class, 'update'])->name('products.update');
     Route::get('/products/categories', [ProductsController::class, 'categories'])->name('products.categories');
     Route::get('/products/{category}', [ProductsController::class, 'showCategoryProducts'])->name('products.category');
     Route::get('/products/{category}/{product}', [ProductsController::class, 'show'])->name('products.show');
@@ -94,19 +104,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/alerts', [AlertsController::class, 'index'])->name('alerts.index');
         Route::get('/alerts/settings', [AlertsController::class, 'settings'])->name('alerts.settings');
         Route::post('/alerts/settings', [AlertsController::class, 'store'])->name('alerts.settings.store');
-        Route::get('/alerts/unread', [AlertsController::class, 'unread'])->name('alerts.unread');
         Route::post('/alerts/{id}/read', [AlertsController::class, 'markRead'])->name('alerts.read');
     });
-
-    // Admin users management routes
-    Route::middleware('admin')->group(function () {
-        Route::get('/users/create', [UsersController::class, 'create'])->name('users.create');
-        Route::post('/users', [UsersController::class, 'store'])->name('users.store');
-    });
+    
+    // Unread alerts endpoint - accessible to all authenticated users
+    Route::get('/alerts/unread', [AlertsController::class, 'unread'])->name('alerts.unread');
     
 });
 
 // Redirect root to dashboard if authenticated, otherwise to login
 Route::get('/', function () {
-    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
+    return Auth::check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
+
