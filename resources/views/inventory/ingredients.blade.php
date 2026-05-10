@@ -107,6 +107,14 @@
             border: 1px solid #f5c6cb;
         }
 
+        .ingredient-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
         .action-buttons {
             display: flex;
             gap: 8px;
@@ -209,6 +217,7 @@
                     <th>Stock Actual</th>
                     <th>Stock Mínimo</th>
                     <th>Costo por Unidad</th>
+                    <th>Imagen</th>
                     <th>Fecha de Vencimiento</th>
                     <th>Estatus</th>
                     <th>Acción</th>
@@ -222,6 +231,13 @@
                         <td>{{ number_format($ingredient['current_stock'], 2) }}</td>
                         <td>{{ number_format($ingredient['minimum_stock'], 2) }}</td>
                         <td>${{ number_format($ingredient['cost_per_unit'], 2) }}</td>
+                        <td>
+                            @if($ingredient['image'])
+                                <img src="/images/{{ $ingredient['image'] }}" alt="{{ $ingredient['name'] }}" class="ingredient-image">
+                            @else
+                                <div class="ingredient-image-placeholder"></div>
+                            @endif
+                        </td>
                         <td>
                             @if($ingredient['expiration_date'])
                                 <span class="expiration-date 
@@ -267,8 +283,8 @@
                                 <button class="btn-action edit" title="Editar" onclick="openEditIngredientModal({{ $ingredient['id'] }})">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn-action delete" title="Eliminar" onclick="deleteIngredient({{ $ingredient['id'] }}, '{{ $ingredient['name'] }}')">
-                                    <i class="fas fa-trash"></i>
+                                <button class="btn-action delete" title="Desactivar" onclick="deleteIngredient({{ $ingredient['id'] }}, '{{ $ingredient['name'] }}')">
+                                    <i class="fas fa-ban"></i>
                                 </button>
                             </div>
                         </td>
@@ -336,6 +352,13 @@
                             <label for="addIngredientExpiration" class="form-label">Fecha de Vencimiento (opcional)</label>
                             <input type="date" class="form-control" id="addIngredientExpiration" name="expiration_date">
                         </div>
+
+                        <div class="form-group">
+                            <label for="addIngredientImage" class="form-label">Imagen (opcional)</label>
+                            <input type="file" class="form-control" id="addIngredientImage" name="image" accept="image/*">
+                            <input type="hidden" id="addIngredientImageName" name="image_name">
+                            <div id="addIngredientImagePreview" class="image-preview mt-2"></div>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -347,7 +370,7 @@
     </div>
 
     <!-- Edit Ingredient Modal -->
-    <div class="modal fade" id="editIngredientModal" tabindex="-1" aria-labelledby="editIngredientModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editIngredientModal" tabindex="-1" aria-labelledby="editIngredientModalLabel">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -396,6 +419,13 @@
                         <div class="form-group">
                             <label for="editIngredientExpiration" class="form-label">Fecha de Vencimiento (opcional)</label>
                             <input type="date" class="form-control" id="editIngredientExpiration" name="expiration_date">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editIngredientImage" class="form-label">Imagen (opcional)</label>
+                            <input type="file" class="form-control" id="editIngredientImage" name="image" accept="image/*">
+                            <input type="hidden" id="editIngredientImageName" name="image_name">
+                            <div id="editIngredientImagePreview" class="image-preview mt-2"></div>
                         </div>
                     </form>
                 </div>
@@ -543,49 +573,11 @@
     </style>
 
     <script>
-        // Cargar ingredientes desde localStorage
-        let hasCache = false;
-        let cacheKey = 'ingredients_cache';
-        let cachedIngredients = loadIngredientsFromCache();
-        let currentIngredients;
+        // Cache busting parameter
+        const VERSION = '{{ time() }}';
         
-        if (cachedIngredients && cachedIngredients.length > 0) {
-            currentIngredients = cachedIngredients;
-            hasCache = true;
-            console.log('Using cached ingredients:', currentIngredients);
-        } else {
-            currentIngredients = @json($allIngredients ?? $ingredients);
-            console.log('Using original ingredients:', currentIngredients);
-            clearIngredientsCache();
-        }
-        
-        function loadIngredientsFromCache() {
-            try {
-                const cached = localStorage.getItem(cacheKey);
-                return cached ? JSON.parse(cached) : null;
-            } catch (e) {
-                console.error('Error loading ingredients from cache:', e);
-                return null;
-            }
-        }
-        
-        function saveIngredientsToCache() {
-            try {
-                localStorage.setItem(cacheKey, JSON.stringify(currentIngredients));
-                console.log('Ingredients saved to cache');
-            } catch (e) {
-                console.error('Error saving ingredients to cache:', e);
-            }
-        }
-        
-        function clearIngredientsCache() {
-            try {
-                localStorage.removeItem(cacheKey);
-                console.log('Ingredients cache cleared');
-            } catch (e) {
-                console.error('Error clearing ingredients cache:', e);
-            }
-        }
+        // Cargar ingredientes desde el servidor (siempre frescos, sin caché)
+        let currentIngredients = @json($allIngredients ?? []);
 
         // Funciones para el modal de agregar ingrediente
         let isAddingIngredient = false;
@@ -602,20 +594,21 @@
 
         function openEditIngredientModal(ingredientId) {
             const ingredient = currentIngredients.find(i => i.id == ingredientId);
-            if (!ingredient) return;
-
-            // Rellenar el formulario con los datos del ingrediente
-            document.getElementById('editIngredientId').value = ingredient.id;
-            document.getElementById('editIngredientName').value = ingredient.name;
-            document.getElementById('editIngredientUnit').value = ingredient.unit;
-            document.getElementById('editIngredientCurrentStock').value = ingredient.current_stock;
-            document.getElementById('editIngredientMinimumStock').value = ingredient.minimum_stock;
-            document.getElementById('editIngredientCost').value = ingredient.cost_per_unit;
-            document.getElementById('editIngredientExpiration').value = ingredient.expiration_date || '';
-
-            // Mostrar el modal
-            const modal = document.getElementById('editIngredientModal');
-            modal.classList.add('show');
+            
+            if (ingredient) {
+                document.getElementById('editIngredientId').value = ingredient.id;
+                document.getElementById('editIngredientName').value = ingredient.name || '';
+                document.getElementById('editIngredientUnit').value = ingredient.unit || '';
+                document.getElementById('editIngredientCurrentStock').value = ingredient.current_stock || 0;
+                document.getElementById('editIngredientMinimumStock').value = ingredient.minimum_stock || 0;
+                document.getElementById('editIngredientCost').value = ingredient.cost_per_unit || 0;
+                document.getElementById('editIngredientExpiration').value = ingredient.expiration_date || '';
+                
+                const modal = document.getElementById('editIngredientModal');
+                modal.classList.add('show');
+            } else {
+                showErrorMessage('Error: No se encontró el ingrediente');
+            }
         }
 
         function closeAddIngredientModal() {
@@ -630,6 +623,9 @@
 
             const form = document.getElementById('addIngredientForm');
             const formData = new FormData(form);
+            
+            // Verificar si hay archivo de imagen
+            const imageFile = document.getElementById('addIngredientImage').files[0];
             
             const ingredientData = {
                 name: formData.get('name'),
@@ -651,20 +647,32 @@
             addButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Agregando...';
 
             try {
+                // Crear FormData para enviar archivo
+                const requestData = new FormData();
+                requestData.append('name', ingredientData.name);
+                requestData.append('unit', ingredientData.unit);
+                requestData.append('current_stock', ingredientData.current_stock);
+                requestData.append('minimum_stock', ingredientData.minimum_stock);
+                requestData.append('cost_per_unit', ingredientData.cost_per_unit);
+                requestData.append('expiration_date', ingredientData.expiration_date || '');
+                
+                // Agregar imagen si existe
+                if (imageFile) {
+                    requestData.append('image', imageFile);
+                }
+
                 const response = await fetch('{{ route("inventory.ingredients.store") }}', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
                     },
-                    body: JSON.stringify(ingredientData)
+                    body: requestData // Enviar FormData en lugar de JSON
                 });
 
                 const result = await response.json();
 
                 if (result.success) {
                     currentIngredients.push(result.ingredient);
-                    saveIngredientsToCache();
                     addIngredientToTable(result.ingredient);
                     closeAddIngredientModal();
                     showSuccessMessage('Ingrediente agregado: ' + result.ingredient.name);
@@ -694,6 +702,11 @@
                 <td>${ingredient.minimum_stock.toFixed(2)}</td>
                 <td>$${ingredient.cost_per_unit.toFixed(2)}</td>
                 <td>
+                    ${ingredient.image ? 
+                        `<img src="/images/${ingredient.image}" alt="${ingredient.name}" class="ingredient-image">` : 
+                        '<div class="ingredient-image-placeholder"></div>'}
+                </td>
+                <td>
                     ${ingredient.expiration_date ? 
                         `<span class="expiration-date">${new Date(ingredient.expiration_date).toLocaleDateString('es-ES')}</span>` : 
                         '<span class="expiration-date">Sin vencimiento</span>'}
@@ -708,8 +721,8 @@
                         <button class="btn-action edit" title="Editar" onclick="openEditIngredientModal(${ingredient.id})">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn-action delete" title="Eliminar" onclick="deleteIngredient(${ingredient.id}, '${ingredient.name.replace(/'/g, "\\'")}')">
-                            <i class="fas fa-trash"></i>
+                        <button class="btn-action delete" title="Desactivar" onclick="deleteIngredient(${ingredient.id}, '${ingredient.name.replace(/'/g, "\\\'")}')">
+                            <i class="fas fa-ban"></i>
                         </button>
                     </div>
                 </td>
@@ -727,13 +740,49 @@
             }, 3000);
         }
 
+        function updateIngredientInTable(ingredientId, ingredientData) {
+            // Encontrar la fila del ingrediente en la tabla
+            const tableRows = document.querySelectorAll('table tbody tr');
+            tableRows.forEach(row => {
+                const editButton = row.querySelector('button[onclick*="openEditIngredientModal"]');
+                if (editButton && editButton.getAttribute('onclick').includes(ingredientId)) {
+                    // Actualizar las celdas de la fila
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length >= 8) {
+                        cells[0].textContent = ingredientData.name; // Nombre (columna 0)
+                        cells[1].textContent = ingredientData.unit; // Unidad (columna 1)
+                        cells[2].textContent = ingredientData.current_stock.toFixed(2); // Stock Actual (columna 2)
+                        cells[3].textContent = ingredientData.minimum_stock.toFixed(2); // Stock Mínimo (columna 3)
+                        cells[4].textContent = '$' + parseFloat(ingredientData.cost_per_unit).toFixed(2); // Costo (columna 4)
+                        
+                        // Actualizar imagen si hay una nueva (columna 5)
+                        if (ingredientData.image) {
+                            const imageCell = cells[5];
+                            imageCell.innerHTML = `<img src="/images/${ingredientData.image}" alt="${ingredientData.name}" class="ingredient-image">`;
+                        }
+                        
+                        // Actualizar fecha de vencimiento (columna 6)
+                        cells[6].innerHTML = ingredientData.expiration_date ? 
+                            `<span class="expiration-date">${new Date(ingredientData.expiration_date).toLocaleDateString('es-ES')}</span>` : 
+                            '<span class="expiration-date">Sin vencimiento</span>';
+                        
+                        // Actualizar el badge de estatus (columna 7)
+                        const statusBadge = cells[7].querySelector('.stock-badge');
+                        if (statusBadge) {
+                            statusBadge.textContent = ingredientData.status === 'stock_ok' ? 'Stock OK' : ingredientData.status === 'low_stock' ? 'Stock Bajo' : 'Stock Crítico';
+                            statusBadge.className = 'stock-badge ' + (ingredientData.status === 'stock_ok' ? 'stock-ok' : ingredientData.status === 'low_stock' ? 'low-stock' : 'critical-stock');
+                        }
+                    }
+                }
+            });
+        }
+
         function deleteIngredient(ingredientId, ingredientName) {
-            if (confirm('¿Estás seguro de que quieres eliminar el ingrediente "' + ingredientName + '"?')) {
+            if (confirm('¿Estás seguro de que quieres desactivar el ingrediente "' + ingredientName + '"?')) {
                 const ingredientIndex = currentIngredients.findIndex(i => i.id == ingredientId);
                 
                 if (ingredientIndex !== -1) {
                     currentIngredients.splice(ingredientIndex, 1);
-                    saveIngredientsToCache();
                     removeIngredientTableRow(ingredientId);
                     showSuccessMessage('Ingrediente eliminado: ' + ingredientName);
                 }
@@ -805,6 +854,9 @@
             const form = document.getElementById('editIngredientForm');
             const formData = new FormData(form);
             
+            // Verificar si hay archivo de imagen
+            const imageFile = document.getElementById('editIngredientImage').files[0];
+            
             const ingredientData = {
                 id: parseInt(formData.get('id')),
                 name: formData.get('name'),
@@ -833,16 +885,47 @@
             }
 
             try {
-                // Simular actualización (reemplazar con llamada real al backend)
-                const ingredientIndex = currentIngredients.findIndex(i => i.id == ingredientData.id);
-                if (ingredientIndex !== -1) {
-                    currentIngredients[ingredientIndex] = { ...currentIngredients[ingredientIndex], ...ingredientData };
-                    saveIngredientsToCache();
-                    updateIngredientInTable(ingredientData.id, ingredientData);
+                // Crear FormData para enviar archivo
+                const requestData = new FormData();
+                requestData.append('id', ingredientData.id);
+                requestData.append('name', ingredientData.name);
+                requestData.append('unit', ingredientData.unit);
+                requestData.append('current_stock', ingredientData.current_stock);
+                requestData.append('minimum_stock', ingredientData.minimum_stock);
+                requestData.append('cost_per_unit', ingredientData.cost_per_unit);
+                requestData.append('expiration_date', ingredientData.expiration_date || '');
+                
+                // Agregar imagen si existe
+                if (imageFile) {
+                    requestData.append('image', imageFile);
+                }
+
+                const response = await fetch('/inventory/ingredients', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                    },
+                    body: requestData // Enviar FormData en lugar de JSON
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Actualizar el array local
+                    const ingredientIndex = currentIngredients.findIndex(i => i.id == ingredientData.id);
+                    if (ingredientIndex !== -1) {
+                        currentIngredients[ingredientIndex] = { ...currentIngredients[ingredientIndex], ...ingredientData };
+                        updateIngredientInTable(ingredientData.id, ingredientData);
+                    }
                     closeEditIngredientModal();
                     showSuccessMessage('Ingrediente actualizado: ' + ingredientData.name);
+                    
+                    // Refrescar la página para ver cambios actualizados en recomendaciones
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
                 } else {
-                    showErrorMessage('No se encontró el ingrediente para actualizar');
+                    showErrorMessage(result.message || 'Error al actualizar el ingrediente');
                 }
             } catch (error) {
                 console.error('Error updating ingredient:', error);
@@ -897,6 +980,15 @@
             });
         }
 
+        // Hacer funciones accesibles globalmente
+        window.openAddIngredientModal = openAddIngredientModal;
+        window.openEditIngredientModal = openEditIngredientModal;
+        window.closeAddIngredientModal = closeAddIngredientModal;
+        window.closeEditIngredientModal = closeEditIngredientModal;
+        window.addIngredient = addIngredient;
+        window.updateIngredient = updateIngredient;
+        window.deleteIngredient = deleteIngredient;
+        
         // Cerrar modal al hacer clic fuera del contenido
         window.onclick = function(event) {
             const addModal = document.getElementById('addIngredientModal');
@@ -909,5 +1001,7 @@
                 closeEditIngredientModal();
             }
         }
+        
+        console.log('Ingredients script loaded successfully');
     </script>
 @endsection
