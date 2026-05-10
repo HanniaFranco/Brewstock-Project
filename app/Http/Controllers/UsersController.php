@@ -25,9 +25,7 @@ class UsersController extends Controller
 
     public function create()
     {
-        $roles = Role::where('id','!=',3)
-            ->orderBy('name')
-            ->get();
+        $roles = Role::where('id','!=',3)->orderBy('name')->get();
 
         return view('users.create', compact('roles'));
     }
@@ -70,9 +68,7 @@ class UsersController extends Controller
     public function show($id)
     {
         $user = User::with('role')->findOrFail($id);
-        $roles = Role::where('id','!=',3)
-            ->orderBy('name')
-            ->get();
+        $roles = Role::where('id','!=',3)->orderBy('name')->get();
 
         return view('users.show', compact('user', 'roles'));
     }

@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Alert;
+use App\Services\RecipeRecommendationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -31,12 +33,10 @@ class DashboardController extends Controller
             ->get();
 
         // Obtener el total de ventas del día
-        $todaySales = Sale::whereDate('sale_date', today())
-            ->sum('total');
+        $todaySales = Sale::whereDate('sale_date', today())->sum('total');
 
         // Obtener alertas no leídas
-        $unreadAlerts = Alert::where('is_read', false)
-            ->count();
+        $unreadAlerts = Alert::query()->where('is_read', false)->count();
 
         // Obtener últimas ventas
         $latestSales = Sale::with(['user', 'items.product'])
@@ -44,11 +44,16 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // Obtener recomendaciones de recetas
+        $recommendationService = new RecipeRecommendationService();
+        $recommendedRecipes = $recommendationService->getRecommendations(3);
+
         return view('dashboard.index', [
             'bestSellingProducts' => $bestSellingProducts,
             'todaySales' => $todaySales,
             'unreadAlerts' => $unreadAlerts,
             'latestSales' => $latestSales,
+            'recommendedRecipes' => $recommendedRecipes,
             'user' => Auth::user(),
         ]);
     }
