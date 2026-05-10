@@ -506,7 +506,7 @@
             hasCache = true;
             console.log('Using cached products for category', categorySlug + ':', currentProducts);
         } else {
-            currentProducts = @json(array_values($products));
+            currentProducts = @json($products);
             console.log('Using original products for category', categorySlug + ':', currentProducts);
             // Limpiar cualquier cache residual de esta categoría
             clearProductsCache();
@@ -550,7 +550,7 @@
             // Si no se encuentra el producto en currentProducts, recargar desde los datos originales
             if (!product) {
                 console.log('Product not found in currentProducts, reloading from original data...');
-                const originalProducts = @json(array_values($products));
+                const originalProducts = @json($products);
                 product = originalProducts.find(p => p.id == productId);
                 
                 if (product) {
@@ -659,7 +659,7 @@
                             cells[0].textContent = productData.name; // Nombre (columna 0)
                             // cells[1] es la imagen (no se actualiza)
                             cells[2].textContent = productData.category; // Categoría (columna 2)
-                            cells[3].textContent = '$' + productData.price.toFixed(2); // Precio (columna 3)
+                            cells[3].textContent = '$' + parseFloat(productData.price).toFixed(2); // Precio (columna 3)
                             
                             // Actualizar el badge de estatus (columna 4)
                             const statusBadge = cells[4].querySelector('.badge');
@@ -730,7 +730,7 @@
                 if (productIndex === -1) {
                     // Si no está en currentProducts, agregarlo primero desde los datos originales
                     console.log('Product not found in currentProducts, loading from original data...');
-                    const originalProducts = @json(array_values($products));
+                    const originalProducts = @json($products);
                     const originalProduct = originalProducts.find(p => p.id == productId);
                     
                     if (originalProduct) {
@@ -779,7 +779,7 @@
             if (productIndex === -1) {
                 // Si no está en currentProducts, agregarlo primero desde los datos originales
                 console.log('Product not found in currentProducts, loading from original data...');
-                const originalProducts = @json(array_values($products));
+                const originalProducts = @json($products);
                 const originalProduct = originalProducts.find(p => p.id == productId);
                 
                 if (originalProduct) {
@@ -967,7 +967,7 @@
                                     // Actualizar celdas con datos cacheados
                                     cells[0].textContent = cachedProduct.name;
                                     cells[2].textContent = cachedProduct.category;
-                                    cells[3].textContent = '$' + cachedProduct.price.toFixed(2);
+                                    cells[3].textContent = '$' + parseFloat(cachedProduct.price).toFixed(2);
                                     
                                     // Actualizar badge de estatus
                                     const statusBadge = cells[4].querySelector('.badge');

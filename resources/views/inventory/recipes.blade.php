@@ -154,145 +154,74 @@
                 height: 56px;
                 font-size: 20px;
             }
+
+            .no-recipes {
+                grid-column: 1 / -1;
+                text-align: center;
+                padding: 60px 20px;
+                color: #6c757d;
+            }
+
+            .no-recipes i {
+                font-size: 48px;
+                margin-bottom: 16px;
+                color: #adb5bd;
+            }
+
+            .no-recipes p {
+                font-size: 16px;
+                margin: 0;
+            }
         }
     </style>
 @endsection
 
 @section('content')
     <div class="recipes-container">
+        <!-- Recomendaciones Inteligentes (con botón toggle) -->
+        @include('partials.recipe-recommendations-toggle', ['recommendedRecipes' => $recommendedRecipes ?? []])
+
         <!-- Recipes Grid -->
         <div class="recipes-grid" id="recipesGrid">
-            <!-- Iced Americano Recipe -->
-            <div class="recipe-card">
-                <div class="recipe-image">
-                    <i class="fas fa-coffee"></i>
-                    <span class="recipe-category">Cafe Frio</span>
-                </div>
-                <div class="recipe-content">
-                    <h3 class="recipe-name">Iced Americano</h3>
-                    <p class="recipe-description">Refrescante café helado con agua y espresso, perfecto para los días calurosos.</p>
-                    <div class="recipe-meta">
-                        <div class="recipe-time">
-                            <i class="fas fa-clock"></i>
-                            <span>5 min</span>
-                        </div>
-                        <div class="recipe-difficulty difficulty-easy">
-                            <i class="fas fa-star"></i>
-                            <span>Fácil</span>
+            @forelse($recipes ?? [] as $recipe)
+                @php
+                    $difficultyClass = match($recipe['difficulty']) {
+                        'Difícil' => 'difficulty-hard',
+                        'Medio' => 'difficulty-medium',
+                        default => 'difficulty-easy'
+                    };
+                    $categoryIcon = match($recipe['category']) {
+                        'Cafe Frio' => 'fa-glass-whiskey',
+                        'Postre' => 'fa-cookie',
+                        default => 'fa-mug-hot'
+                    };
+                @endphp
+                <div class="recipe-card" data-slug="{{ $recipe['slug'] }}">
+                    <div class="recipe-image">
+                        <i class="fas {{ $categoryIcon }}"></i>
+                        <span class="recipe-category">{{ $recipe['category'] }}</span>
+                    </div>
+                    <div class="recipe-content">
+                        <h3 class="recipe-name">{{ $recipe['name'] }}</h3>
+                        <p class="recipe-description">{{ $recipe['description'] }}</p>
+                        <div class="recipe-meta">
+                            <div class="recipe-time">
+                                <i class="fas fa-clock"></i>
+                                <span>{{ $recipe['time'] }}</span>
+                            </div>
+                            <div class="recipe-difficulty {{ $difficultyClass }}">
+                                <i class="fas fa-star"></i>
+                                <span>{{ $recipe['difficulty'] }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Cappuccino Recipe -->
-            <div class="recipe-card">
-                <div class="recipe-image">
-                    <i class="fas fa-mug-hot"></i>
-                    <span class="recipe-category">Cafe Caliente</span>
+            @empty
+                <div class="no-recipes">
+                    <i class="fas fa-info-circle"></i>
+                    <p>No hay recetas disponibles. Crea tu primera receta.</p>
                 </div>
-                <div class="recipe-content">
-                    <h3 class="recipe-name">Cappuccino</h3>
-                    <p class="recipe-description">Clásico italiano con espresso, leche vaporizada y espuma cremosa.</p>
-                    <div class="recipe-meta">
-                        <div class="recipe-time">
-                            <i class="fas fa-clock"></i>
-                            <span>8 min</span>
-                        </div>
-                        <div class="recipe-difficulty difficulty-medium">
-                            <i class="fas fa-star"></i>
-                            <span>Medio</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Latte Recipe -->
-            <div class="recipe-card">
-                <div class="recipe-image">
-                    <i class="fas fa-coffee"></i>
-                    <span class="recipe-category">Cafe Caliente</span>
-                </div>
-                <div class="recipe-content">
-                    <h3 class="recipe-name">Café Latte</h3>
-                    <p class="recipe-description">Suave combinación de espresso con leche vaporizada y un toque de espuma.</p>
-                    <div class="recipe-meta">
-                        <div class="recipe-time">
-                            <i class="fas fa-clock"></i>
-                            <span>7 min</span>
-                        </div>
-                        <div class="recipe-difficulty difficulty-easy">
-                            <i class="fas fa-star"></i>
-                            <span>Fácil</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Mocha Recipe -->
-            <div class="recipe-card">
-                <div class="recipe-image">
-                    <i class="fas fa-mug-hot"></i>
-                    <span class="recipe-category">Cafe Caliente</span>
-                </div>
-                <div class="recipe-content">
-                    <h3 class="recipe-name">Mocha</h3>
-                    <p class="recipe-description">Delicioso café con chocolate, leche vaporizada y crema batida.</p>
-                    <div class="recipe-meta">
-                        <div class="recipe-time">
-                            <i class="fas fa-clock"></i>
-                            <span>10 min</span>
-                        </div>
-                        <div class="recipe-difficulty difficulty-medium">
-                            <i class="fas fa-star"></i>
-                            <span>Medio</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Cold Brew Recipe -->
-            <div class="recipe-card">
-                <div class="recipe-image">
-                    <i class="fas fa-glass-whiskey"></i>
-                    <span class="recipe-category">Cafe Frio</span>
-                </div>
-                <div class="recipe-content">
-                    <h3 class="recipe-name">Cold Brew</h3>
-                    <p class="recipe-description">Café extraído en frío por 12 horas, suave y con bajo acidez.</p>
-                    <div class="recipe-meta">
-                        <div class="recipe-time">
-                            <i class="fas fa-clock"></i>
-                            <span>12 hr</span>
-                        </div>
-                        <div class="recipe-difficulty difficulty-hard">
-                            <i class="fas fa-star"></i>
-                            <span>Difícil</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Macchiato Recipe -->
-            <div class="recipe-card">
-                <div class="recipe-image">
-                    <i class="fas fa-coffee"></i>
-                    <span class="recipe-category">Cafe Caliente</span>
-                </div>
-                <div class="recipe-content">
-                    <h3 class="recipe-name">Caramel Macchiato</h3>
-                    <p class="recipe-description">Espresso con leche vaporizada, caramelo y vainilla.</p>
-                    <div class="recipe-meta">
-                        <div class="recipe-time">
-                            <i class="fas fa-clock"></i>
-                            <span>8 min</span>
-                        </div>
-                        <div class="recipe-difficulty difficulty-medium">
-                            <i class="fas fa-star"></i>
-                            <span>Medio</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            @endforelse
         </div>
 
         <!-- Floating Action Button -->
@@ -311,12 +240,14 @@
         document.querySelectorAll('.recipe-card').forEach(card => {
             card.addEventListener('click', function(e) {
                 if (!e.target.closest('.fab-button')) {
+                    const recipeSlug = this.dataset.slug;
                     const recipeName = this.querySelector('.recipe-name').textContent;
-                    const recipeSlug = recipeName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
                     console.log('Ver receta:', recipeName, 'Slug:', recipeSlug);
                     
                     // Redirigir a página individual de la receta
-                    window.location.href = `/inventory/recipes/${recipeSlug}`;
+                    if (recipeSlug) {
+                        window.location.href = `/inventory/recipes/${recipeSlug}`;
+                    }
                 }
             });
         });
@@ -367,20 +298,20 @@
             const newCard = document.createElement('div');
             newCard.className = 'recipe-card';
             newCard.innerHTML = `
-                <div class='recipe-image'>
-                    <i class='fas ${categoryIcons[recipe.category] || 'fa-coffee'}'></i>
-                    <span class='recipe-category'>${categoryLabels[recipe.category] || recipe.category}</span>
+                <div class="recipe-image">
+                    <i class="fas ${categoryIcons[recipe.category] || 'fa-coffee'}"></i>
+                    <span class="recipe-category">${categoryLabels[recipe.category] || recipe.category}</span>
                 </div>
-                <div class='recipe-content'>
-                    <h3 class='recipe-name'>${recipe.name}</h3>
-                    <p class='recipe-description'>Receta personalizada creada por ti.</p>
-                    <div class='recipe-meta'>
-                        <div class='recipe-time'>
-                            <i class='fas fa-clock'></i>
+                <div class="recipe-content">
+                    <h3 class="recipe-name">${recipe.name}</h3>
+                    <p class="recipe-description">Receta personalizada creada por ti.</p>
+                    <div class="recipe-meta">
+                        <div class="recipe-time">
+                            <i class="fas fa-clock"></i>
                             <span>Personalizado</span>
                         </div>
-                        <div class='recipe-difficulty difficulty-easy'>
-                            <i class='fas fa-star'></i>
+                        <div class="recipe-difficulty difficulty-easy">
+                            <i class="fas fa-star"></i>
                             <span>Personal</span>
                         </div>
                     </div>
@@ -390,6 +321,7 @@
             // Agregar evento de click
             newCard.addEventListener('click', function(e) {
                 if (!e.target.closest('.fab-button')) {
+                    console.log('Navegando a receta:', recipe.slug);
                     window.location.href = `/inventory/recipes/${recipe.slug}`;
                 }
             });

@@ -177,6 +177,9 @@
         @endif
     </div>
 
+    <!-- Recomendaciones Inteligentes -->
+    @include('partials.recipe-recommendations', ['recommendedRecipes' => $recommendedRecipes])
+
     <!-- Main Content Row -->
     <div class="content-row">
         <!-- Productos más vendidos -->
