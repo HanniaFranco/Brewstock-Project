@@ -259,7 +259,11 @@
                     <tr>
                         <td class="product-name">{{ $product['name'] }}</td>
                         <td>
-                            <div class="product-image-placeholder"></div>
+                            @if($product['image'])
+                                <img src="{{ asset('images/' . $product['image']) }}" alt="{{ $product['name'] }}" class="product-image">
+                            @else
+                                <div class="product-image-placeholder"></div>
+                            @endif
                         </td>
                         <td>{{ $product['category'] }}</td>
                         <td>${{ number_format($product['price'], 2) }}</td>
@@ -328,11 +332,9 @@
                             <label for="editProductCategory" class="form-label">Categoría</label>
                             <select class="form-control" id="editProductCategory" name="category" required>
                                 <option value="">Seleccionar categoría</option>
-                                <option value="Bebidas Frías">Bebidas Frías</option>
-                                <option value="Bebidas calientes">Bebidas calientes</option>
-                                <option value="Tés e Infusiones">Tés e Infusiones</option>
-                                <option value="Repostería">Repostería</option>
-                                <option value="Snacks">Snacks</option>
+                                @foreach($allCategories as $category)
+                                    <option value="{{ $category }}">{{ $category }}</option>
+                                @endforeach
                             </select>
                         </div>
 
@@ -485,6 +487,35 @@
             transform: translateY(-1px);
         }
 
+        .image-preview {
+            width: 120px;
+            height: 120px;
+            max-width: 120px;
+            max-height: 120px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+
+        .image-preview .placeholder {
+            color: #6c757d;
+            font-size: 14px;
+            text-align: center;
+            padding: 20px;
+        }
+
         @media (max-width: 768px) {
             .modal-dialog {
                 width: 95%;
@@ -576,6 +607,19 @@
             document.getElementById('editProductCategory').value = product.category;
             document.getElementById('editProductPrice').value = product.price;
             document.getElementById('editProductStatus').value = product.status;
+
+            // Show existing image preview
+            const preview = document.getElementById('editProductImagePreview');
+            const hiddenName = document.getElementById('editProductImageName');
+            const fileInput = document.getElementById('editProductImage');
+            if (product.image) {
+                preview.innerHTML = `<img src="/images/${product.image}" alt="${product.name}">`;
+                hiddenName.value = product.image;
+            } else {
+                preview.innerHTML = '<div class="placeholder">Sin imagen</div>';
+                hiddenName.value = '';
+                fileInput.value = '';
+            }
 
             const modal = document.getElementById('editProductModal');
             if (modal) {
@@ -717,51 +761,35 @@
             }, 3000);
         }
 
-        function deleteProduct(productId, productName) {
-            console.log('=== DELETE FUNCTION CALLED ===');
-            console.log('Attempting to delete product:', productId, productName);
-            console.log('currentProducts:', currentProducts);
-            
-            if (confirm('¿Estás seguro de que quieres eliminar el producto "' + productName + '"?')) {
-                // Eliminar el producto del array
-                let productIndex = currentProducts.findIndex(p => p.id == productId);
-                console.log('Product index found:', productIndex);
-                
-                if (productIndex === -1) {
-                    // Si no está en currentProducts, agregarlo primero desde los datos originales
-                    console.log('Product not found in currentProducts, loading from original data...');
-                    const originalProducts = @json($products);
-                    const originalProduct = originalProducts.find(p => p.id == productId);
-                    
-                    if (originalProduct) {
-                        currentProducts.push(originalProduct);
-                        productIndex = currentProducts.findIndex(p => p.id == productId);
-                        console.log('Product restored from original data, new index:', productIndex);
+        async function deleteProduct(productId, productName) {
+            if (!confirm('¿Estás seguro de que quieres eliminar el producto "' + productName + '"?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/products/' + productId, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Accept': 'application/json'
                     }
-                }
-                
-                console.log('Current products before delete:', currentProducts);
-                
-                if (productIndex !== -1) {
-                    const deletedProduct = currentProducts[productIndex];
-                    currentProducts.splice(productIndex, 1);
-                    console.log('Product deleted from array. Current products:', currentProducts);
-                    
-                    // Guardar en cache
-                    saveProductsToCache();
-                    console.log('Cache saved after delete');
-                    
-                    // Eliminar la fila de la tabla
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    const productIndex = currentProducts.findIndex(p => p.id == productId);
+                    if (productIndex !== -1) {
+                        currentProducts.splice(productIndex, 1);
+                        saveProductsToCache();
+                    }
                     removeTableRow(productId);
-                    
-                    // Mostrar mensaje de éxito
                     showSuccessMessage('Producto eliminado: ' + productName);
                 } else {
-                    console.error('Product not found in array for deletion. Available IDs:', currentProducts.map(p => p.id));
-                    showErrorMessage('No se encontró el producto para eliminar');
+                    showErrorMessage(result.message || 'Error al eliminar el producto');
                 }
-            } else {
-                console.log('Delete cancelled by user');
+            } catch (error) {
+                console.error('Error deleting product:', error);
+                showErrorMessage('Error de conexión al eliminar el producto');
             }
         }
 

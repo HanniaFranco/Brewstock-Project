@@ -75,6 +75,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/products', [ProductsController::class, 'index'])->name('products.index');
     Route::post('/products', [ProductsController::class, 'store'])->name('products.store');
     Route::put('/products/{id}', [ProductsController::class, 'update'])->name('products.update');
+    Route::delete('/products/{id}', [ProductsController::class, 'destroy'])->name('products.destroy');
     Route::get('/products/categories', [ProductsController::class, 'categories'])->name('products.categories');
     Route::get('/products/{category}', [ProductsController::class, 'showCategoryProducts'])->name('products.category');
     Route::get('/products/{category}/{product}', [ProductsController::class, 'show'])->name('products.show');
@@ -83,6 +84,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::get('/inventory/ingredients', [InventoryController::class, 'ingredients'])->name('inventory.ingredients');
     Route::post('/inventory/ingredients', [InventoryController::class, 'storeIngredient'])->name('inventory.ingredients.store');
+    Route::delete('/inventory/ingredients/{id}', [InventoryController::class, 'destroyIngredient'])->name('inventory.ingredients.destroy');
+    Route::post('/inventory/categories', [InventoryController::class, 'storeCategory'])->name('inventory.categories.store');
     Route::get('/inventory/recipes', [InventoryController::class, 'recipes'])->name('inventory.recipes');
     Route::get('/inventory/recipes/create', [InventoryController::class, 'createRecipe'])->name('inventory.recipes.create');
     Route::get('/inventory/recipes/{slug}', [InventoryController::class, 'showRecipe'])->name('inventory.recipes.show');

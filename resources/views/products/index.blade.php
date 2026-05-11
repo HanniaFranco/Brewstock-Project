@@ -319,11 +319,9 @@
                             <label for="editProductCategory" class="form-label">Categoría</label>
                             <select class="form-control" id="editProductCategory" name="category" required>
                                 <option value="">Seleccionar categoría</option>
-                                <option value="Bebidas Frías">Bebidas Frías</option>
-                                <option value="Bebidas calientes">Bebidas calientes</option>
-                                <option value="Tés e Infusiones">Tés e Infusiones</option>
-                                <option value="Repostería">Repostería</option>
-                                <option value="Snacks">Snacks</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category }}">{{ $category }}</option>
+                                @endforeach
                             </select>
                         </div>
 
@@ -377,11 +375,9 @@
                             <label for="addProductCategory" class="form-label">Categoría</label>
                             <select class="form-control" id="addProductCategory" name="category" required>
                                 <option value="">Seleccionar categoría</option>
-                                <option value="Bebidas Frías">Bebidas Frías</option>
-                                <option value="Bebidas calientes">Bebidas calientes</option>
-                                <option value="Tés e Infusiones">Tés e Infusiones</option>
-                                <option value="Repostería">Repostería</option>
-                                <option value="Snacks">Snacks</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category }}">{{ $category }}</option>
+                                @endforeach
                             </select>
                         </div>
 
@@ -549,8 +545,10 @@
         }
 
         .image-preview {
-            max-width: 200px;
-            max-height: 200px;
+            width: 120px;
+            height: 120px;
+            max-width: 120px;
+            max-height: 120px;
             border: 2px dashed #ddd;
             border-radius: 8px;
             display: flex;
@@ -561,6 +559,8 @@
         }
 
         .image-preview img {
+            width: 100%;
+            height: 100%;
             max-width: 100%;
             max-height: 100%;
             object-fit: cover;
@@ -646,6 +646,19 @@
             document.getElementById('editProductCategory').value = product.category;
             document.getElementById('editProductPrice').value = product.price;
             document.getElementById('editProductStatus').value = product.status;
+
+            // Show existing image preview
+            const preview = document.getElementById('editProductImagePreview');
+            const hiddenName = document.getElementById('editProductImageName');
+            const fileInput = document.getElementById('editProductImage');
+            if (product.image) {
+                preview.innerHTML = `<img src="/images/${product.image}" alt="${product.name}">`;
+                hiddenName.value = product.image;
+                fileInput.value = '';
+            } else {
+                preview.innerHTML = '<div class="placeholder">Sin imagen</div>';
+                hiddenName.value = '';
+            }
 
             const modal = document.getElementById('editProductModal');
             modal.removeAttribute('aria-hidden');
@@ -810,32 +823,35 @@
             }, 3000);
         }
 
-        function deleteProduct(productId, productName) {
-            console.log('Attempting to delete product:', productId, productName);
-            if (confirm('¿Estás seguro de que quieres eliminar el producto "' + productName + '"?')) {
-                // Eliminar el producto del array
-                const productIndex = currentProducts.findIndex(p => p.id == productId);
-                console.log('Product index found:', productIndex);
-                console.log('Current products before delete:', currentProducts);
-                
-                if (productIndex !== -1) {
-                    const deletedProduct = currentProducts[productIndex];
-                    currentProducts.splice(productIndex, 1);
-                    console.log('Product deleted from array. Current products:', currentProducts);
-                    
-                    // Guardar en cache
-                    saveProductsToCache();
-                    console.log('Cache saved after delete');
-                    
-                    // Eliminar la fila de la tabla
+        async function deleteProduct(productId, productName) {
+            if (!confirm('¿Estás seguro de que quieres eliminar el producto "' + productName + '"?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/products/' + productId, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Accept': 'application/json'
+                    }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    const productIndex = currentProducts.findIndex(p => p.id == productId);
+                    if (productIndex !== -1) {
+                        currentProducts.splice(productIndex, 1);
+                        saveProductsToCache();
+                    }
                     removeTableRow(productId);
-                    
-                    // Mostrar mensaje de éxito
                     showSuccessMessage('Producto eliminado: ' + productName);
                 } else {
-                    console.error('Product not found in array for deletion. Available IDs:', currentProducts.map(p => p.id));
-                    showErrorMessage('No se encontró el producto para eliminar');
+                    showErrorMessage(result.message || 'Error al eliminar el producto');
                 }
+            } catch (error) {
+                console.error('Error deleting product:', error);
+                showErrorMessage('Error de conexión al eliminar el producto');
             }
         }
 
@@ -1125,12 +1141,14 @@
             const form = document.getElementById('addProductForm');
             const formData = new FormData(form);
             
+            // Verificar si hay archivo de imagen
+            const imageFile = document.getElementById('addProductImage').files[0];
+            
             const productData = {
                 name: formData.get('name'),
                 category: formData.get('category'),
                 price: parseFloat(formData.get('price')),
-                status: formData.get('status'),
-                image: formData.get('image') || null
+                status: formData.get('status')
             };
 
             // Validación básica
@@ -1146,13 +1164,24 @@
             addButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Agregando...';
 
             try {
+                // Crear FormData para enviar archivo
+                const requestData = new FormData();
+                requestData.append('name', productData.name);
+                requestData.append('category', productData.category);
+                requestData.append('price', productData.price);
+                requestData.append('status', productData.status);
+                
+                // Agregar imagen si existe
+                if (imageFile) {
+                    requestData.append('image', imageFile);
+                }
+
                 const response = await fetch('{{ route("products.store") }}', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                     },
-                    body: JSON.stringify(productData)
+                    body: requestData // Enviar FormData en lugar de JSON
                 });
 
                 const result = await response.json();
@@ -1215,12 +1244,14 @@
                     categorySlug = 'snacks';
             }
             
+            const imageCell = product.image
+                ? `<img src="/images/${product.image}" alt="${product.name}" class="product-image">`
+                : `<div class="product-image-placeholder"></div>`;
+
             const newRow = document.createElement('tr');
             newRow.innerHTML = `
                 <td class="product-name">${product.name}</td>
-                <td>
-                    <div class="product-image-placeholder"></div>
-                </td>
+                <td>${imageCell}</td>
                 <td>${product.category}</td>
                 <td>$${parseFloat(product.price).toFixed(2)}</td>
                 <td>

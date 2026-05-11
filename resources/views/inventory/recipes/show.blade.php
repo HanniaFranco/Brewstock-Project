@@ -292,9 +292,21 @@
                 <!-- Ingredients -->
                 <div class="form-group">
                     <label class="form-label" for="ingredients">Ingredientes</label>
-                    <textarea class="form-control textarea" id="ingredients" name="ingredients" placeholder="Lista de ingredientes (uno por línea)">{{ isset($recipe) ? $recipe['ingredients'] : '' }}</textarea>
+                    <textarea class="form-control textarea" id="ingredients" name="ingredients" placeholder="Lista de ingredientes (uno por línea)">{{ isset($recipe) && is_array($recipe['ingredients']) ? app('App\\Http\\Controllers\\InventoryController')->formatIngredientsForTextarea($recipe['ingredients']) : (isset($recipe) ? $recipe['ingredients'] : '') }}</textarea>
                     <div class="ingredients-list">
-                        @if(isset($recipe) && $recipe['ingredients'])
+                        @if(isset($recipe) && is_array($recipe['ingredients']))
+                            @foreach($recipe['ingredients'] as $ingredient)
+                                @if(is_array($ingredient) && isset($ingredient['name']))
+                                    <span class="ingredient-tag">
+                                        {{ $ingredient['name'] }}: {{ $ingredient['quantity'] }} {{ $ingredient['unit'] }}
+                                    </span>
+                                @elseif(isset($ingredient['ingredient']))
+                                    <span class="ingredient-tag">
+                                        {{ $ingredient['ingredient']['name'] }}: {{ $ingredient['quantity_required'] }} {{ $ingredient['ingredient']['unit'] }}
+                                    </span>
+                                @endif
+                            @endforeach
+                        @elseif(isset($recipe) && $recipe['ingredients'])
                             @php
                                 $ingredientsArray = explode("\n", $recipe['ingredients']);
                                 foreach($ingredientsArray as $ingredient) {
@@ -386,17 +398,8 @@
                 if (result.success) {
                     alert(result.message);
                     if (!isEditing && result.redirect) {
-                        // Guardar en cache y redirigir
-                        saveRecipeToCache(result.recipe);
                         window.location.href = result.redirect;
                     } else {
-                        // Actualizar cache y regresar a la lista
-                        updateRecipeInCache(result.recipe);
-                        // Actualizar el card en la página de lista
-                        if (window.opener || window.parent !== window) {
-                            // Si viene de otra página, actualizar el opener
-                            window.opener.updateRecipeInGrid(result.recipe);
-                        }
                         window.location.href = '/inventory/recipes';
                     }
                 } else {
@@ -419,39 +422,5 @@
             ).join('');
         });
 
-        // Funciones de cache para recetas
-        function saveRecipeToCache(recipe) {
-            try {
-                let cachedRecipes = JSON.parse(localStorage.getItem('recipes_cache') || '[]');
-                cachedRecipes.push(recipe);
-                localStorage.setItem('recipes_cache', JSON.stringify(cachedRecipes));
-                console.log('Receta guardada en cache:', recipe);
-            } catch (e) {
-                console.error('Error guardando receta en cache:', e);
-            }
-        }
-
-        function updateRecipeInCache(updatedRecipe) {
-            try {
-                let cachedRecipes = JSON.parse(localStorage.getItem('recipes_cache') || '[]');
-                const index = cachedRecipes.findIndex(r => r.slug === updatedRecipe.slug);
-                if (index !== -1) {
-                    cachedRecipes[index] = updatedRecipe;
-                    localStorage.setItem('recipes_cache', JSON.stringify(cachedRecipes));
-                    console.log('Receta actualizada en cache:', updatedRecipe);
-                }
-            } catch (e) {
-                console.error('Error actualizando receta en cache:', e);
-            }
-        }
-
-        function loadRecipesFromCache() {
-            try {
-                return JSON.parse(localStorage.getItem('recipes_cache') || '[]');
-            } catch (e) {
-                console.error('Error cargando recetas desde cache:', e);
-                return [];
-            }
-        }
     </script>
 @endsection

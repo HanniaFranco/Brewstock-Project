@@ -400,14 +400,7 @@
             });
         }
 
-        // Cargar recetas desde cache al iniciar la página
-        document.addEventListener('DOMContentLoaded', function() {
-            loadCachedRecipes();
-        });
-
-        // También cargar cuando la página gana foco (al regresar de otra pestaña)
-        window.addEventListener('focus', function() {
-            setTimeout(loadCachedRecipes, 100);
-        });
+        // Las recetas temporales se cargan desde el servidor (sesión) en el controlador,
+        // por lo que no es necesario leerlas desde localStorage y mostrar recetas fantasmas.
     </script>
 @endsection

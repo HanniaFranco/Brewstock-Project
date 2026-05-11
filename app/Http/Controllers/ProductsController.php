@@ -11,6 +11,14 @@ class ProductsController extends Controller
 {
     public function index()
     {
+        // Get all product categories
+        $categories = Product::whereNotNull('category')
+            ->selectRaw('category, COUNT(*) as count')
+            ->groupBy('category')
+            ->orderBy('category')
+            ->pluck('category')
+            ->toArray();
+
         $allProducts = Product::query()->get()->map(function ($product) {
             return [
                 'id' => $product->id,
@@ -22,7 +30,7 @@ class ProductsController extends Controller
             ];
         })->toArray();
 
-        return view('products.index', compact('allProducts'));
+        return view('products.index', compact('allProducts', 'categories'));
     }
 
     public function store(Request $request)
@@ -33,16 +41,39 @@ class ProductsController extends Controller
                 'category' => 'required|string|max:255',
                 'price' => 'required|numeric|min:0',
                 'status' => 'required|in:Activo,Inactivo',
-                'image' => 'nullable|string|max:255',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'image_name' => 'nullable|string|max:255',
             ]);
 
             $product = Product::query()->create([
                 'name' => $request->name,
                 'category' => $request->category,
                 'price' => $request->price,
-                'status' => $request->status,
-                'image' => $request->image ?? null,
+                'active' => $request->status === 'Activo',
             ]);
+
+            // Manejar subida de imagen
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imageName = time() . '_' . $image->getClientOriginalName();
+                $image->move(public_path('images'), $imageName);
+                
+                // Crear registro en tabla de imágenes
+                Image::create([
+                    'path' => $imageName,
+                    'imageable_type' => Product::class,
+                    'imageable_id' => $product->id,
+                ]);
+            } elseif ($request->filled('image_name')) {
+                // Si solo se proporciona el nombre, crear registro sin archivo
+                Image::create([
+                    'path' => $request->image_name,
+                    'imageable_type' => Product::class,
+                    'imageable_id' => $product->id,
+                ]);
+            }
+
+            $product->load('images');
 
             return response()->json([
                 'success' => true,
@@ -122,25 +153,34 @@ class ProductsController extends Controller
 
         $categoryName = $categoryMap[$category] ?? $category;
         
+        // Get all product categories
+        $allCategories = Product::whereNotNull('category')
+            ->selectRaw('category, COUNT(*) as count')
+            ->groupBy('category')
+            ->orderBy('category')
+            ->pluck('category')
+            ->toArray();
+        
         // Obtener productos reales de la base de datos filtrados por categoría
         $products = Product::query()
+            ->with('images')
             ->where('category', $categoryName)
             ->get()
             ->map(function ($product) {
+                // Calcular estado basado en el campo active
+                $status = $product->active ? 'Activo' : 'Inactivo';
+
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
                     'image' => $product->image,
                     'category' => $product->category,
                     'price' => $product->price,
-                    'status' => $product->status,
+                    'status' => $status,
                 ];
             });
 
-        return view('products.category_products', [
-            'categoryName' => $categoryName,
-            'products' => $products
-        ]);
+        return view('products.category_products', compact('products', 'category', 'allCategories'));
     }
 
     public function show($category, $productId)
@@ -192,7 +232,7 @@ class ProductsController extends Controller
                 'name' => $request->name,
                 'category' => $request->category,
                 'price' => $request->price,
-                'status' => $request->status,
+                'active' => $request->status === 'Activo',
             ];
 
             // Manejar subida de imagen
@@ -217,6 +257,7 @@ class ProductsController extends Controller
             }
 
             $product->update($updateData);
+            $product->load('images');
 
             return response()->json([
                 'success' => true,

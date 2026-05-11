@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Ingredientes')
-@section('page_title', 'Todos los Ingredientes')
+@section('page_title', request()->category ? 'Ingredientes - ' . str_replace('-', ' ', request()->category) : 'Todos los Ingredientes')
 
 @section('styles')
     <style>
@@ -15,6 +15,33 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #5a7248;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 6px 12px;
+            border: 1px solid #5a7248;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            width: fit-content;
+        }
+
+        .back-btn:hover {
+            background: #5a7248;
+            color: white;
+            text-decoration: none;
         }
 
         .page-title {
@@ -200,7 +227,17 @@
 @section('content')
     <!-- Page Header -->
     <div class="page-header">
-        <h1 class="page-title">Todos los Ingredientes</h1>
+        <div class="header-left">
+            @if(request()->category)
+                <a href="{{ route('inventory.index') }}" class="back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Volver a Categorías
+                </a>
+                <h1 class="page-title">Ingredientes - {{ str_replace('-', ' ', request()->category) }}</h1>
+            @else
+                <h1 class="page-title">Todos los Ingredientes</h1>
+            @endif
+        </div>
         <button class="add-ingredient-btn" onclick="openAddIngredientModal()">
             <i class="fas fa-plus"></i>
             Agregar Ingrediente
@@ -212,7 +249,8 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Nombre</th>
+                    <th>Nombre del Ingrediente</th>
+                    <th>Categoría</th>
                     <th>Unidad</th>
                     <th>Stock Actual</th>
                     <th>Stock Mínimo</th>
@@ -227,6 +265,7 @@
                 @forelse($allIngredients ?? $ingredients as $ingredient)
                     <tr>
                         <td class="ingredient-name">{{ $ingredient['name'] }}</td>
+                        <td>{{ $ingredient['category'] }}</td>
                         <td>{{ $ingredient['unit'] }}</td>
                         <td>{{ number_format($ingredient['current_stock'], 2) }}</td>
                         <td>{{ number_format($ingredient['minimum_stock'], 2) }}</td>
@@ -291,7 +330,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="text-center py-5">
+                        <td colspan="9" class="text-center py-5">
                             <div class="no-ingredients">
                                 <i class="fas fa-flask fa-3x text-muted mb-3"></i>
                                 <p class="text-muted">No hay ingredientes registrados</p>
@@ -318,6 +357,16 @@
                         <div class="form-group">
                             <label for="addIngredientName" class="form-label">Nombre del ingrediente</label>
                             <input type="text" class="form-control" id="addIngredientName" name="name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="addIngredientCategory" class="form-label">Categoría</label>
+                            <select class="form-control" id="addIngredientCategory" name="category">
+                                <option value="">Sin categoría</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category }}">{{ $category }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="form-group">
@@ -386,6 +435,16 @@
                         <div class="form-group">
                             <label for="editIngredientName" class="form-label">Nombre del ingrediente</label>
                             <input type="text" class="form-control" id="editIngredientName" name="name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editIngredientCategory" class="form-label">Categoría</label>
+                            <select class="form-control" id="editIngredientCategory" name="category">
+                                <option value="">Sin categoría</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category }}">{{ $category }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="form-group">
@@ -564,6 +623,35 @@
             transform: translateY(-1px);
         }
 
+        .image-preview {
+            width: 120px;
+            height: 120px;
+            max-width: 120px;
+            max-height: 120px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+
+        .image-preview .placeholder {
+            color: #6c757d;
+            font-size: 14px;
+            text-align: center;
+            padding: 20px;
+        }
+
         @media (max-width: 768px) {
             .modal-dialog {
                 width: 95%;
@@ -593,21 +681,42 @@
         }
 
         function openEditIngredientModal(ingredientId) {
+            console.log('Opening edit modal for ingredient ID:', ingredientId);
+            console.log('Current ingredients array:', currentIngredients);
+            console.log('Array length:', currentIngredients.length);
+            
             const ingredient = currentIngredients.find(i => i.id == ingredientId);
+            console.log('Found ingredient:', ingredient);
             
             if (ingredient) {
                 document.getElementById('editIngredientId').value = ingredient.id;
                 document.getElementById('editIngredientName').value = ingredient.name || '';
+                document.getElementById('editIngredientCategory').value = ingredient.category || '';
                 document.getElementById('editIngredientUnit').value = ingredient.unit || '';
                 document.getElementById('editIngredientCurrentStock').value = ingredient.current_stock || 0;
                 document.getElementById('editIngredientMinimumStock').value = ingredient.minimum_stock || 0;
                 document.getElementById('editIngredientCost').value = ingredient.cost_per_unit || 0;
                 document.getElementById('editIngredientExpiration').value = ingredient.expiration_date || '';
-                
+
+                // Show existing image preview
+                const preview = document.getElementById('editIngredientImagePreview');
+                const hiddenName = document.getElementById('editIngredientImageName');
+                const fileInput = document.getElementById('editIngredientImage');
+                if (ingredient.image) {
+                    preview.innerHTML = `<img src="/images/${ingredient.image}" alt="${ingredient.name}">`;
+                    hiddenName.value = ingredient.image;
+                } else {
+                    preview.innerHTML = '<div class="placeholder">Sin imagen</div>';
+                    hiddenName.value = '';
+                    fileInput.value = '';
+                }
+
                 const modal = document.getElementById('editIngredientModal');
                 modal.classList.add('show');
             } else {
-                showErrorMessage('Error: No se encontró el ingrediente');
+                console.error('Ingredient not found in currentIngredients array');
+                console.error('Available ingredient IDs:', currentIngredients.map(i => i.id));
+                showErrorMessage('Error: No se encontró el ingrediente con ID: ' + ingredientId);
             }
         }
 
@@ -629,6 +738,7 @@
             
             const ingredientData = {
                 name: formData.get('name'),
+                category: formData.get('category') || null,
                 unit: formData.get('unit'),
                 current_stock: parseFloat(formData.get('current_stock')),
                 minimum_stock: parseFloat(formData.get('minimum_stock')),
@@ -650,6 +760,7 @@
                 // Crear FormData para enviar archivo
                 const requestData = new FormData();
                 requestData.append('name', ingredientData.name);
+                requestData.append('category', ingredientData.category || '');
                 requestData.append('unit', ingredientData.unit);
                 requestData.append('current_stock', ingredientData.current_stock);
                 requestData.append('minimum_stock', ingredientData.minimum_stock);
@@ -664,7 +775,8 @@
                 const response = await fetch('{{ route("inventory.ingredients.store") }}', {
                     method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+                        'Accept': 'application/json'
                     },
                     body: requestData // Enviar FormData en lugar de JSON
                 });
@@ -697,6 +809,7 @@
             const newRow = document.createElement('tr');
             newRow.innerHTML = `
                 <td class="ingredient-name">${ingredient.name}</td>
+                <td>${ingredient.category || 'Sin categoría'}</td>
                 <td>${ingredient.unit}</td>
                 <td>${ingredient.current_stock.toFixed(2)}</td>
                 <td>${ingredient.minimum_stock.toFixed(2)}</td>
@@ -728,6 +841,12 @@
                 </td>
             `;
             
+            // Hide the "no ingredients" message if it exists
+            const noIngredientsRow = tableBody.querySelector('.no-ingredients');
+            if (noIngredientsRow) {
+                noIngredientsRow.remove();
+            }
+
             if (tableBody.firstChild) {
                 tableBody.insertBefore(newRow, tableBody.firstChild);
             } else {
@@ -740,52 +859,35 @@
             }, 3000);
         }
 
-        function updateIngredientInTable(ingredientId, ingredientData) {
-            // Encontrar la fila del ingrediente en la tabla
-            const tableRows = document.querySelectorAll('table tbody tr');
-            tableRows.forEach(row => {
-                const editButton = row.querySelector('button[onclick*="openEditIngredientModal"]');
-                if (editButton && editButton.getAttribute('onclick').includes(ingredientId)) {
-                    // Actualizar las celdas de la fila
-                    const cells = row.querySelectorAll('td');
-                    if (cells.length >= 8) {
-                        cells[0].textContent = ingredientData.name; // Nombre (columna 0)
-                        cells[1].textContent = ingredientData.unit; // Unidad (columna 1)
-                        cells[2].textContent = ingredientData.current_stock.toFixed(2); // Stock Actual (columna 2)
-                        cells[3].textContent = ingredientData.minimum_stock.toFixed(2); // Stock Mínimo (columna 3)
-                        cells[4].textContent = '$' + parseFloat(ingredientData.cost_per_unit).toFixed(2); // Costo (columna 4)
-                        
-                        // Actualizar imagen si hay una nueva (columna 5)
-                        if (ingredientData.image) {
-                            const imageCell = cells[5];
-                            imageCell.innerHTML = `<img src="/images/${ingredientData.image}" alt="${ingredientData.name}" class="ingredient-image">`;
-                        }
-                        
-                        // Actualizar fecha de vencimiento (columna 6)
-                        cells[6].innerHTML = ingredientData.expiration_date ? 
-                            `<span class="expiration-date">${new Date(ingredientData.expiration_date).toLocaleDateString('es-ES')}</span>` : 
-                            '<span class="expiration-date">Sin vencimiento</span>';
-                        
-                        // Actualizar el badge de estatus (columna 7)
-                        const statusBadge = cells[7].querySelector('.stock-badge');
-                        if (statusBadge) {
-                            statusBadge.textContent = ingredientData.status === 'stock_ok' ? 'Stock OK' : ingredientData.status === 'low_stock' ? 'Stock Bajo' : 'Stock Crítico';
-                            statusBadge.className = 'stock-badge ' + (ingredientData.status === 'stock_ok' ? 'stock-ok' : ingredientData.status === 'low_stock' ? 'low-stock' : 'critical-stock');
-                        }
-                    }
-                }
-            });
-        }
+        
+        async function deleteIngredient(ingredientId, ingredientName) {
+            if (!confirm('¿Estás seguro de que quieres eliminar el ingrediente "' + ingredientName + '"?')) {
+                return;
+            }
 
-        function deleteIngredient(ingredientId, ingredientName) {
-            if (confirm('¿Estás seguro de que quieres desactivar el ingrediente "' + ingredientName + '"?')) {
-                const ingredientIndex = currentIngredients.findIndex(i => i.id == ingredientId);
-                
-                if (ingredientIndex !== -1) {
-                    currentIngredients.splice(ingredientIndex, 1);
+            try {
+                const response = await fetch('/inventory/ingredients/' + ingredientId, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Accept': 'application/json'
+                    }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    const ingredientIndex = currentIngredients.findIndex(i => i.id == ingredientId);
+                    if (ingredientIndex !== -1) {
+                        currentIngredients.splice(ingredientIndex, 1);
+                    }
                     removeIngredientTableRow(ingredientId);
                     showSuccessMessage('Ingrediente eliminado: ' + ingredientName);
+                } else {
+                    showErrorMessage(result.message || 'Error al eliminar el ingrediente');
                 }
+            } catch (error) {
+                console.error('Error deleting ingredient:', error);
+                showErrorMessage('Error de conexión al eliminar el ingrediente');
             }
         }
 
@@ -860,6 +962,7 @@
             const ingredientData = {
                 id: parseInt(formData.get('id')),
                 name: formData.get('name'),
+                category: formData.get('category') || null,
                 unit: formData.get('unit'),
                 current_stock: parseFloat(formData.get('current_stock')),
                 minimum_stock: parseFloat(formData.get('minimum_stock')),
@@ -889,6 +992,7 @@
                 const requestData = new FormData();
                 requestData.append('id', ingredientData.id);
                 requestData.append('name', ingredientData.name);
+                requestData.append('category', ingredientData.category || '');
                 requestData.append('unit', ingredientData.unit);
                 requestData.append('current_stock', ingredientData.current_stock);
                 requestData.append('minimum_stock', ingredientData.minimum_stock);
@@ -903,7 +1007,8 @@
                 const response = await fetch('/inventory/ingredients', {
                     method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+                        'Accept': 'application/json'
                     },
                     body: requestData // Enviar FormData en lugar de JSON
                 });
@@ -911,12 +1016,23 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // Actualizar el array local
-                    const ingredientIndex = currentIngredients.findIndex(i => i.id == ingredientData.id);
+                    // Update the ingredient in the currentIngredients array
+                    const ingredientIndex = currentIngredients.findIndex(i => i.id === ingredientData.id);
                     if (ingredientIndex !== -1) {
-                        currentIngredients[ingredientIndex] = { ...currentIngredients[ingredientIndex], ...ingredientData };
-                        updateIngredientInTable(ingredientData.id, ingredientData);
+                        currentIngredients[ingredientIndex] = {
+                            ...currentIngredients[ingredientIndex],
+                            name: ingredientData.name,
+                            category: ingredientData.category || 'Sin categoría',
+                            unit: ingredientData.unit,
+                            current_stock: ingredientData.current_stock,
+                            minimum_stock: ingredientData.minimum_stock,
+                            cost_per_unit: ingredientData.cost_per_unit,
+                            expiration_date: ingredientData.expiration_date,
+                            status: ingredientData.status
+                        };
                     }
+                    
+                    updateIngredientInTable(ingredientData.id, ingredientData);
                     closeEditIngredientModal();
                     showSuccessMessage('Ingrediente actualizado: ' + ingredientData.name);
                     
@@ -943,23 +1059,28 @@
                     
                     if (ingredientIdMatch && parseInt(ingredientIdMatch[1]) === ingredientId) {
                         const cells = row.querySelectorAll('td');
-                        if (cells.length >= 7) {
-                            cells[0].textContent = ingredientData.name; // Nombre
-                            cells[1].textContent = ingredientData.unit; // Unidad
-                            cells[2].textContent = ingredientData.current_stock.toFixed(2); // Stock Actual
-                            cells[3].textContent = ingredientData.minimum_stock.toFixed(2); // Stock Mínimo
-                            cells[4].textContent = '$' + ingredientData.cost_per_unit.toFixed(2); // Costo
+                        if (cells.length >= 10) {
+                            cells[0].textContent = ingredientData.name; // Nombre (0)
+                            cells[1].textContent = ingredientData.category || 'Sin categoría'; // Categoría (1)
+                            cells[2].textContent = ingredientData.unit; // Unidad (2)
+                            cells[3].textContent = ingredientData.current_stock.toFixed(2); // Stock Actual (3)
+                            cells[4].textContent = ingredientData.minimum_stock.toFixed(2); // Stock Mínimo (4)
+                            cells[5].textContent = '$' + ingredientData.cost_per_unit.toFixed(2); // Costo (5)
                             
-                            // Actualizar fecha de vencimiento
-                            const dateCell = cells[5];
-                            if (ingredientData.expiration_date) {
-                                dateCell.innerHTML = `<span class="expiration-date">${new Date(ingredientData.expiration_date).toLocaleDateString('es-ES')}</span>`;
-                            } else {
-                                dateCell.innerHTML = '<span class="expiration-date">Sin vencimiento</span>';
+                            // Actualizar imagen (6) - solo si hay imagen nueva
+                            if (ingredientData.image) {
+                                cells[6].innerHTML = `<img src="/images/${ingredientData.image}" alt="${ingredientData.name}" class="ingredient-image">`;
                             }
                             
-                            // Actualizar badge de estatus
-                            const statusBadge = cells[6].querySelector('.stock-badge');
+                            // Actualizar fecha de vencimiento (7)
+                            if (ingredientData.expiration_date) {
+                                cells[7].innerHTML = `<span class="expiration-date">${new Date(ingredientData.expiration_date).toLocaleDateString('es-ES')}</span>`;
+                            } else {
+                                cells[7].innerHTML = '<span class="expiration-date">Sin vencimiento</span>';
+                            }
+                            
+                            // Actualizar badge de estatus (8)
+                            const statusBadge = cells[8].querySelector('.stock-badge');
                             if (statusBadge) {
                                 statusBadge.textContent = ingredientData.status === 'stock_ok' ? 'Stock OK' : ingredientData.status === 'low_stock' ? 'Stock Bajo' : 'Stock Crítico';
                                 statusBadge.className = 'stock-badge ' + (ingredientData.status === 'stock_ok' ? 'stock-ok' : ingredientData.status === 'low_stock' ? 'low-stock' : 'critical-stock');
