@@ -180,7 +180,7 @@ class ProductsController extends Controller
                 ];
             });
 
-        return view('products.category_products', compact('products', 'category', 'allCategories'));
+        return view('products.category_products', compact('products', 'categoryName', 'allCategories'));
     }
 
     public function show($category, $productId)

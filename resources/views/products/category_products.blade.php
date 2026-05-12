@@ -608,19 +608,6 @@
             document.getElementById('editProductPrice').value = product.price;
             document.getElementById('editProductStatus').value = product.status;
 
-            // Show existing image preview
-            const preview = document.getElementById('editProductImagePreview');
-            const hiddenName = document.getElementById('editProductImageName');
-            const fileInput = document.getElementById('editProductImage');
-            if (product.image) {
-                preview.innerHTML = `<img src="/images/${product.image}" alt="${product.name}">`;
-                hiddenName.value = product.image;
-            } else {
-                preview.innerHTML = '<div class="placeholder">Sin imagen</div>';
-                hiddenName.value = '';
-                fileInput.value = '';
-            }
-
             const modal = document.getElementById('editProductModal');
             if (modal) {
                 modal.classList.add('show');
