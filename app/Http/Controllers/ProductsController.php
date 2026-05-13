@@ -41,7 +41,7 @@ class ProductsController extends Controller
                 'category' => 'required|string|max:255',
                 'price' => 'required|numeric|min:0',
                 'status' => 'required|in:Activo,Inactivo',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
                 'image_name' => 'nullable|string|max:255',
             ]);
 
@@ -224,7 +224,7 @@ class ProductsController extends Controller
                 'category' => 'required|string|max:255',
                 'price' => 'required|numeric|min:0',
                 'status' => 'required|in:Activo,Inactivo',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
                 'image_name' => 'nullable|string|max:255',
             ]);
 
@@ -235,25 +235,38 @@ class ProductsController extends Controller
                 'active' => $request->status === 'Activo',
             ];
 
-            // Manejar subida de imagen
+            // Manejar subida de imagen (reemplazar la anterior si existe)
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 $imageName = time() . '_' . $image->getClientOriginalName();
                 $image->move(public_path('images'), $imageName);
-                
-                // Crear registro en tabla de imágenes
-                $imageModel = Image::create([
-                    'path' => $imageName,
-                    'imageable_type' => Product::class,
-                    'imageable_id' => $product->id,
-                ]);
+
+                $existing = $product->images()->first();
+                if ($existing) {
+                    $oldPath = public_path('images') . DIRECTORY_SEPARATOR . $existing->path;
+                    if (file_exists($oldPath)) {
+                        @unlink($oldPath);
+                    }
+                    $existing->update(['path' => $imageName]);
+                } else {
+                    Image::create([
+                        'path' => $imageName,
+                        'imageable_type' => Product::class,
+                        'imageable_id' => $product->id,
+                    ]);
+                }
+
             } elseif ($request->filled('image_name')) {
-                // Si solo se proporciona el nombre, crear registro sin archivo
-                Image::create([
-                    'path' => $request->image_name,
-                    'imageable_type' => Product::class,
-                    'imageable_id' => $product->id,
-                ]);
+                $existing = $product->images()->first();
+                if ($existing) {
+                    $existing->update(['path' => $request->image_name]);
+                } else {
+                    Image::create([
+                        'path' => $request->image_name,
+                        'imageable_type' => Product::class,
+                        'imageable_id' => $product->id,
+                    ]);
+                }
             }
 
             $product->update($updateData);

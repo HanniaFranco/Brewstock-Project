@@ -103,7 +103,7 @@ class InventoryController extends Controller
             'minimum_stock'   => 'required|numeric|min:0',
             'cost_per_unit'   => 'required|numeric|min:0',
             'expiration_date' => 'nullable|date',
-            'image'           => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image'           => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'image_name'      => 'nullable|string|max:255',
         ];
         
@@ -125,21 +125,40 @@ class InventoryController extends Controller
         }
 
         $imageHandler = function (Ingredient $ingredient) use ($request) {
+            // If a new file is uploaded, replace existing image file & record
             if ($request->hasFile('image')) {
                 $image     = $request->file('image');
                 $imageName = time() . '_' . $image->getClientOriginalName();
                 $image->move(public_path('images'), $imageName);
-                Image::create([
-                    'path'           => $imageName,
-                    'imageable_type' => Ingredient::class,
-                    'imageable_id'   => $ingredient->id,
-                ]);
+
+                $existing = $ingredient->images()->first();
+                if ($existing) {
+                    $oldPath = public_path('images') . DIRECTORY_SEPARATOR . $existing->path;
+                    if (file_exists($oldPath)) {
+                        @unlink($oldPath);
+                    }
+                    $existing->update(['path' => $imageName]);
+                } else {
+                    Image::create([
+                        'path'           => $imageName,
+                        'imageable_type' => Ingredient::class,
+                        'imageable_id'   => $ingredient->id,
+                    ]);
+                }
+
+            // If an image name string is provided (e.g., selecting from existing names), replace or create
             } elseif ($request->filled('image_name')) {
-                Image::create([
-                    'path'           => $request->image_name,
-                    'imageable_type' => Ingredient::class,
-                    'imageable_id'   => $ingredient->id,
-                ]);
+                $existing = $ingredient->images()->first();
+                if ($existing) {
+                    // Do not attempt to delete local file when using image_name (external or reference)
+                    $existing->update(['path' => $request->image_name]);
+                } else {
+                    Image::create([
+                        'path'           => $request->image_name,
+                        'imageable_type' => Ingredient::class,
+                        'imageable_id'   => $ingredient->id,
+                    ]);
+                }
             }
         };
 
