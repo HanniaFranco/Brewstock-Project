@@ -25,11 +25,7 @@ class UsersController extends Controller
 
     public function create()
     {
-<<<<<<< Updated upstream
         $roles = Role::where('id','!=',3)->orderBy('name')->get();
-=======
-        $roles = Role::orderBy('name')->get();
->>>>>>> Stashed changes
 
         return view('users.create', compact('roles'));
     }
@@ -72,11 +68,7 @@ class UsersController extends Controller
     public function show($id)
     {
         $user = User::with('role')->findOrFail($id);
-<<<<<<< Updated upstream
         $roles = Role::where('id','!=',3)->orderBy('name')->get();
-=======
-        $roles = Role::orderBy('name')->get();
->>>>>>> Stashed changes
 
         return view('users.show', compact('user', 'roles'));
     }
