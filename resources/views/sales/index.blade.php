@@ -96,6 +96,9 @@
                 <h5>Reporte de Ventas</h5>
             </div>
             <div class="card-body">
+                <div class="d-flex justify-content-end mb-3">
+                    <a href="{{ route('sales.create') }}" class="btn btn-primary">Abrir caja</a>
+                </div>
                 <p>Contenido de ventas aquí...</p>
             </div>
         </div>

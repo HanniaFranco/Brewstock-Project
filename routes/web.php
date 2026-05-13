@@ -94,12 +94,14 @@ Route::middleware(['auth'])->group(function () {
     
     // Users routes
     Route::get('/users', [UsersController::class, 'index'])->name('users.index');
-    Route::get('/users/{id}', [UsersController::class, 'show'])->name('users.show');
-    Route::put('/users/{id}', [UsersController::class, 'update'])->name('users.update');
+    Route::get('/users/{id}', [UsersController::class, 'show'])->whereNumber('id')->name('users.show');
+    Route::put('/users/{id}', [UsersController::class, 'update'])->whereNumber('id')->name('users.update');
     
     // Sales routes
     Route::middleware('restrict.sales')->group(function () {
         Route::get('/sales', [SalesController::class, 'index'])->name('sales.index');
+        Route::get('/sales/create', [SalesController::class, 'create'])->name('sales.create');
+        Route::post('/sales', [SalesController::class, 'store'])->name('sales.store');
     });
     
     // Alerts routes
