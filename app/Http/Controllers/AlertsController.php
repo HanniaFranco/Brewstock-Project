@@ -16,12 +16,30 @@ class AlertsController extends Controller
 
     public function settings()
     {
-        $ingredients = Ingredient::orderBy('name')->get();
+        // Obtener ingredientes reales (excluir temporales usados para categorías)
+        $ingredients = Ingredient::whereNotNull('id')
+            ->orderBy('category')
+            ->orderBy('name')
+            ->get()
+            ->filter(function($i){
+                return !\str_starts_with($i->name, '_temp_');
+            });
+
+        // Agrupar por categoría, colocando 'Sin categoría' al final si existe
+        $grouped = $ingredients->groupBy(function($i){
+            return $i->category ?? 'Sin categoría';
+        })->sortKeys();
+
+        if ($grouped->has(null) || $grouped->has('')) {
+            $noCat = $grouped->pull(null) ?? $grouped->pull('') ?? collect();
+            $grouped['Sin categoría'] = $noCat;
+        }
+
         $settings = AlertSetting::where('user_id', Auth::id())->get()->keyBy(function($s){
             return 'i_'.$s->ingredient_id;
         });
 
-        return view('alerts.settings', compact('ingredients','settings'));
+        return view('alerts.settings', ['groupedIngredients' => $grouped, 'settings' => $settings]);
     }
 
     public function store(Request $request)

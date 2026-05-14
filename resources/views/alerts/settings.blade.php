@@ -105,13 +105,19 @@
 
                     <h6>Ingredientes</h6>
                     <div class="mb-3">
-                        @foreach($ingredients as $ingredient)
-                            <?php $key = 'i_'.$ingredient->id; $s = $settings[$key] ?? null; ?>
-                            <div class="form-group">
-                                <label>{{ $ingredient->name }} ({{ $ingredient->unit }})</label>
-                                <input type="hidden" name="ingredient[{{ $ingredient->id }}][id]" value="{{ $ingredient->id }}">
-                                <input type="number" step="0.01" min="0" name="ingredient[{{ $ingredient->id }}][threshold]" value="{{ $s->threshold ?? '' }}" class="form-control" placeholder="Cantidad objetivo para alerta (ej: 0.50)">
+                        @foreach($groupedIngredients as $category => $items)
+                            <div class="category-separator" style="margin-top:18px; padding:10px; background:#e9f5ea; border-radius:6px; border:1px solid #d6ead6;">
+                                <strong>{{ $category }}</strong>
                             </div>
+
+                            @foreach($items as $ingredient)
+                                <?php $key = 'i_'.$ingredient->id; $s = $settings[$key] ?? null; ?>
+                                <div class="form-group" style="margin-top:8px;">
+                                    <label>{{ $ingredient->name }} ({{ $ingredient->unit }})</label>
+                                    <input type="hidden" name="ingredient[{{ $ingredient->id }}][id]" value="{{ $ingredient->id }}">
+                                    <input type="number" step="0.01" min="0" name="ingredient[{{ $ingredient->id }}][threshold]" value="{{ $s->threshold ?? '' }}" class="form-control" placeholder="Cantidad objetivo para alerta (ej: 0.50)">
+                                </div>
+                            @endforeach
                         @endforeach
                     </div>
 
